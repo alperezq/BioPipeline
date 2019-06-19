@@ -18,4 +18,4 @@ def RVDminer(files, src, RVDdst, DISdst):
     comboFile = DISdst + "rvdCombo.FASTA"
     with open(DISdst + 'disErr', 'w') as disErr:
         subprocess.Popen(["perl", "DisTAL_v1.3_Groups.pl", "-m", "T", comboFile, "disTALOut", "4.5"], close_fds=True, stderr=disErr).communicate()[0]
-    shutil.move(os.getcwd() + "/" "Outputs", DISdst + "Outputs")
+    shutil.move(os.getcwd() + "/Outputs", DISdst + "Outputs")

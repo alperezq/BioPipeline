@@ -17,7 +17,7 @@ RPath = paste(projectPath, "Rfiles/", sep = "")
 
 repeatsTRF <- read.delim(paste(TRFPath,"trfParsed.txt", sep = ""), header = FALSE, sep = " ")
 
-disOut <- as.matrix(read.table(paste(DisTALPath, "disTALOut.mat", sep = ""), header=TRUE, sep = "\t",row.names = 1, as.is=TRUE))
+disOut <- as.matrix(read.table(paste(DisTALPath, "Outputs/", "disTALOut.mat", sep = ""), header=TRUE, sep = "\t",row.names = 1, as.is=TRUE))
 
 
 countsTRF<-as.data.frame(table(repeatsTRF$V6,repeatsTRF$V1))
