@@ -1,0 +1,89 @@
+#!/usr/bin/perl
+$argc = @ARGV;
+
+if ($argc != 4)   
+{
+    print "usage: \n perl scrummbleTest.pl sequence_file cost_file number_of_simulations outputfilename\n";
+    exit;
+}
+my $seq_file = $ARGV[0];
+my $costfile = $ARGV[1];
+my $numberofsimulations=$ARGV[2];
+my $numberofiterations=50;
+my $outputfile=$ARGV[3];
+my $mod_structu_flag=1;
+my $breakeven_flag=0;
+
+my $improved_left=800;
+my $improved_right=0;
+my $diff;
+
+
+
+$argstring="rm -f $seq_file.ScrumbleResult.txt";
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+}    
+
+# putting number of interations zero in the call scrumbletest disables
+# unit swaps
+
+# setting modular structure flag 1 imposes using modular strucutre
+if(1){
+
+$argstring="scrummbleTest.pl $seq_file $costfile 0 $seq_file.evaluated $mod_structu_flag $breakeven_flag";
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+
+open(seqIN, "<$seq_file.ScrumbleResult.txt");
+my @Seqs=<seqIN>;
+foreach $seq (@Seqs){
+    if($seq=~/L: (\d+), R: (\d+), diff: (-*\d+)/){
+	$improved_left=$1;
+	$improved_right=$2;
+	$diff=$3;
+    }    
+    
+}
+close(seqIN);
+}
+
+
+$argstring="rm -f $seq_file.ScrumbleResult.txt";
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+for($i=0;$i<$numberofsimulations;$i++){    
+    $argstring="scrummbleTest.pl $seq_file $costfile $numberofiterations $outputfile $mod_structu_flag $breakeven_flag";
+    $retval=system($argstring);
+    if($retval!=0){
+	print "Error running: $argstring\n";
+	exit -1;
+    } 
+    print "Scrumble test number ". ($i+1)."  done\n"; 
+
+    #$argstring="cat $outputfile.align.both >> BreakevenRandom.align";
+    #system($argstring);
+    
+}
+
+
+if($breakeven_flag==0){
+    $argstring="plotStatistics.pl $seq_file.ScrumbleResult.txt  $improved_left $improved_right";
+}
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+exit(0);

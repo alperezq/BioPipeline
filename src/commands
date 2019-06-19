@@ -1,0 +1,23 @@
+Usage:
+MSATcompare -f map_file -cfile cost_file [options]
+Options:
+-align              : compute pairwise alignment for all genomes
+-onlyleft           : do not allow right duplications
+-onlyright          : do not allow left duplications
+-alphadep           : use alphabet dependent algorithm
+-insert             : allow free insertions in the history and alignment
+-showalign          : display alignment, this option sets "-align" option
+-random a b c d e   : generate random data option, where
+                      a is the number of map sequences
+                      b is the min. sequence length
+                      c is the max. sequence length
+                      d is the alphabet_size
+                      e is the max_number of unit repetitions
+
+
+MSATcompare -f mapfortest.txt -cfile costs_file
+
+MSATcompare -f mapfortest.txt -cfile costs_file -align
+
+
+MSATcompare -random 100 50 75 20 25 > random_map

@@ -1,0 +1,22 @@
+*/////////////////////////////////////////////////////////////*
+*                 This is WAMI   version 1.0                  *
+*                     processDoubleCopy.pl                    *
+*          Copyright by Mohamed I. Abouelhoda  (C) 2007       *
+*  Plz. cite Abouelhoda, Giegerich, Behzadi, and Steyaert,    *
+*                    APBC 2008, and JBCB                      *
+*/////////////////////////////////////////////////////////////*
+
+Synopsis:
+
+This scripts is used to replace tandem duplications with one unit
+For example, "a b a b a b" is replaced with "C C C", where C represents 
+"a b". The cost file is adjusted to add respective new map units, such
+as the "C" in the previous example.
+
+
+Usage:
+>processDoubleCopy.pl sequence_file costfile > output_seq_file
+
+Note: - output_seq_file contains directed output sequence
+      - the cost file is reported as "costfile.mod" in the same 
+        directory as input cost file

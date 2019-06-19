@@ -1,0 +1,235 @@
+#!/usr/bin/perl
+$argc = @ARGV;
+
+if ($argc != 6)   
+{
+    print "usage: \n perl scrummbleTest.pl sequence_file cost_file number_of_iterations outputfilename use_modular_structure_flag $breakeven_flag\n";
+    exit -1;
+}
+my $seq_file = $ARGV[0];
+my $costfile = $ARGV[1];
+my $numberofsimulations=$ARGV[2];
+my $outputfile=$ARGV[3];
+my $modular_struct_flag=$ARGV[4];
+my $breakeven_flag=$ARGV[5];
+
+my $strongflag=1;
+my $len_threshold=30;
+
+#print "No of iterations: $numberofsimulations \n";
+
+open(seqIN, "<$seq_file")
+    or die "Oops! can't open input file ".$seq_file."\n"; 
+my @Seqs=<seqIN>;
+close(seqIN);
+
+open(seqOut, ">$outputfile")
+    or die "Oops! can't open input file ".$outputfile."\n"; 
+
+
+if(1){ # to skip computation
+
+my @unique_types;
+my @unique_type_length;
+my $tmplen;
+# read each sequence and scrumble its unit types
+
+foreach $seq (@Seqs){
+    if($seq=~/>/){
+	#print $seq;
+    }
+    else{
+	my @types=split(/\s+/,$seq);
+	$seqlen=scalar(@types);
+	push(@unique_types,$types[0]);
+	
+	for($i=1;$i<$seqlen;$i++){
+	    if($types[$i] ne $types[$i-1]){
+		push(@unique_types,$types[$i]);
+	    }
+	}
+	foreach $utype (@unique_types){
+	    push(@unique_type_length,1);	    
+	}
+	my $j=0;
+	for($i=1;$i<$seqlen;$i++){
+	    if($types[$i] ne $types[$i-1]){
+		#push(@unique_types,$types[$i]);
+		$j++;
+	    }
+	    else{
+		$unique_type_length[$j]++;
+	    }
+	}
+	# printing result for debugging
+	$j=0;
+
+	$tmplen=scalar(@unique_types);
+
+
+	# swap types
+	# crunch big chunks
+	if($numberofsimulations>1){
+	    if((0)&&($strongflag==1)){
+		foreach $utype (@unique_types){
+		    if($unique_type_length[$j]>$len_threshold){
+			push(@unique_type_length,$unique_type_length[$j]-$len_threshold);
+			push(@unique_types,$utype);
+			$unique_type_length[$j]=$len_threshold;
+		    }
+		    $j++;
+		}
+	    }
+	}
+
+	for($k=0;$k<$numberofsimulations;$k++){
+	    $pos1=int (rand($tmplen));
+	    $pos2=int (rand($tmplen));	    
+	    if($pos1==$pos2){
+		$k--;
+		next;
+	    }
+	    #print "length: ".$tmplen.",  ".$pos1." ".$pos2."\n";
+	    if(($pos1<$tmplen) && ($pos2<$tmplen)&&(1)){ # the last and is a flag to take/skip swap
+		$tmpswap=$unique_types[$pos1];
+		$unique_types[$pos1]=$unique_types[$pos2];;
+		$unique_types[$pos2]=$tmpswap;
+		
+		
+		$tmpswap2=$unique_type_length[$pos1];
+		$unique_type_length[$pos1]=$unique_type_length[$pos2];
+		$unique_type_length[$pos2]=$tmpswap2;
+	
+	    }
+		   
+	}
+	# end swap
+	
+	# display after swap
+	$j=0;
+	if(0){ # ms format
+	    foreach $utype (@unique_types){
+		print seqOut  $utype."(".$unique_type_length[$j].") ";
+		$j++;
+	    }
+	    print seqOut "\n";
+	}
+	else{ # fasta like format
+	    #print seqOut "> seq \n";
+	    foreach $utype (@unique_types){
+		if($modular_struct_flag){
+		    $unique_type_length[$j]=1;
+		}	       
+		for($z=0;$z<$unique_type_length[$j];$z++){
+		    print seqOut  $utype." ";
+		}
+		$j++;
+	    }
+	    print seqOut "\n";	    
+	}
+
+	#end display after swap
+
+	for($i=0;$i<$tmplen;$i++){
+	    pop(@unique_types);
+	    pop(@unique_type_length);
+	}
+	
+	
+    }
+    #$sqcounter++;
+    
+}
+
+close(seqOut);
+
+
+# report sequence file
+print "Runing: arelm.....................\n";
+
+# run arlem three times and return difference
+if($breakeven_flag){
+$argstring="arlem -f $outputfile  -cfile $costfile  -align -rle -breakeven > $outputfile.align.both";
+}
+else{
+$argstring="arlem -f $outputfile  -cfile $costfile  -align -rle > $outputfile.align.both";
+}
+print "Runing: $argstring.\n";
+
+$retval=system($argstring);
+
+if($retval != 0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+$argstring="arlem -f $outputfile  -cfile $costfile  -align -rle -onlyleft > $outputfile.align.onlyleft";
+print "Runing: $argstring.\n";
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+$argstring="arlem -f $outputfile  -cfile $costfile  -align -rle -onlyright > $outputfile.align.onlyright";
+print "Runing: $argstring.\n";
+
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+# evaluate left
+$argstring="arlem -evaluate $outputfile.align.both $outputfile.align.onlyleft> $outputfile.evaluate.left";
+print "Runing: $argstring.\n";
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+
+#evaluate right
+$argstring="arlem -evaluate $outputfile.align.both $outputfile.align.onlyright> $outputfile.evaluate.right";
+print "Runing: $argstring.\n";
+$retval=system($argstring);
+if($retval!=0){
+    print "Error running: $argstring\n";
+    exit -1;
+} 
+} # to skip
+
+# improvement in left
+open(EVIN, "<$outputfile.evaluate.left")
+    or die "Oops! can't open input file $outputfile.evaluate.left \n"; 
+
+my @lines=<EVIN>;
+foreach $line (@lines){
+    if($line=~/improved.+\s+(\d+)/){
+	$improved_left=$1;
+    }
+
+}
+close(EVIN);
+
+
+# improvement in right
+open(EVIN, "<$outputfile.evaluate.right")
+    or die "Oops! can't open input file $outputfile.evaluate.right \n";
+my @lines=<EVIN>;
+foreach $line (@lines){
+    if($line=~/improved.+\s+(\d+)/){
+	$improved_right=$1;
+    }
+}
+close(EVIN);
+
+#print "Improved when left only: $improved_left, Improved when right only: $improved_right \n";
+$diff=$improved_left-$improved_right;
+
+open(ScrumbleOut, ">>$seq_file.ScrumbleResult.txt")
+    or die "Oops! can't open input file $seq_file.ScrumbleResult.txt \n"; 
+print ScrumbleOut "L: $improved_left, R: $improved_right, diff: $diff \n";
+close(ScrumbleOut);
+
+exit 0;

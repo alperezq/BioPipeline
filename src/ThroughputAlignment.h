@@ -1,0 +1,80 @@
+// ThroughputAlignment.h: interface for the ThroughputAlignment class.
+//
+//////////////////////////////////////////////////////////////////////
+
+#if !defined(AFX_THROUGHPUTALIGNMENT)
+#define AFX_THROUGHPUTALIGNMENT
+
+
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+//#include <string.h>
+#include <stdlib.h>
+
+#include "TestingDupHist.h"
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class ThroughputAlignment  
+{
+public:
+
+    	int type_no;
+	int indel_align;
+	int indel_hist;
+	int alphadep_flag;
+	vector <string> types_vector;
+
+	//char sequence[MaxSeqSize];
+	//char outsequence[MaxSeqSize];
+	int seqlength;
+	int inputalphabet;
+	//char GivenAlphabet[MaxAlphaSize][MaxCodeSize];
+	//char Mapping[MaxAlphaSize];
+	int validsequencenumber;
+	int min_seq_len;
+	int max_seq_len;
+	int average_seq_len;
+	long number_of_sequences;
+
+	int** in_dist; // cost matrix for every sequence
+	void read_cost_file(char* costfilename); // read cost matrix and file in_dist matrix
+	
+	///options
+	int duplication_cost;
+	int align_flag;
+	int show_alignment_flag;
+	int allow_insertion_flag;
+	int rle_flag;
+
+	int show_statistics_flag;
+	int show_cost_file_flag;
+	int show_breakeven_flag;
+
+public:
+	ThroughputAlignment();
+	virtual ~ThroughputAlignment();
+	int AlldataSetAlign(char*, int,char*,int,char*);
+	void parsedatasetfile(char* filename,char* desfilename,TestingDupHist*,int);
+	void parse_expanded_datasetfile(char* filename,char* desfilename,TestingDupHist* HistArrayObj, int revflag);
+	void Evaluate(char*,char*);
+	char MakeMapping(char*);
+	void RandomDataSet(char* filename, int seq_number);
+	void get_file_statistics(char* filename);
+	void set_align_flag(int in_align_flag){align_flag=in_align_flag;};
+	void set_rle_flag(int in_rle_flag){rle_flag=in_rle_flag;};
+	void set_alphadep_flag(int in_alphadep_flag){alphadep_flag=in_alphadep_flag;};
+	void set_show_alignment_flag(int in_show_alignment_flag){show_alignment_flag=in_show_alignment_flag;};
+	void set_show_breakeven_flag(int in_show_breakeven_flag){show_breakeven_flag=in_show_breakeven_flag;};
+	void set_allow_insertion_flag(int in_allow_insertion_flag){allow_insertion_flag=in_allow_insertion_flag;};
+	void set_show_flag(int in_stat_flag,int in_cost_flag){
+	    show_statistics_flag=in_stat_flag;
+	    show_cost_file_flag=in_cost_flag;
+	};
+	int check_traingularity_of_cost();
+};
+
+#endif // !defined(AFX_THROUGHPUTALIGNMENT)

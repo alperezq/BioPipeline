@@ -1,14 +1,18 @@
 #!/usr/bin/python
 #Bioinformatics Pipeline
-import ProkkaToOrtho as PTO #Import Py script for Prokka and Orthofinder call
-import RVDtoDIS as RtoD #Import Py script for RVDminer and DisTAL call
+from addScripts import ProkkaToOrtho as PTO
+from addScripts import RVDtoDIS as RtoD
+from addScripts import trfParse
 import os, shutil #Necessary for directory checks and file movements
 import time #To breakup processes and make output readable
 import sys #Allows exiting of code in case of irreconcilable error
-import glob #Manipulation of files in directories
 import argparse #Allows use of command line style argument call
 import subprocess #For execution of outside scripts
-from multiprocessing import Pool #For concurrent processes
+import multiprocessing as mp #Run proceses & run multiple processes at once
+import time
+
+#Prevents creation of .pyc files when running
+sys.dont_write_bytecode = True
 
 #Parser from argparse for command line refinement
 parserPS = argparse.ArgumentParser()
@@ -16,7 +20,6 @@ parserPS.add_argument("name", help="Name of project, must be non-existant direct
 parserPS.add_argument("fasta", help="Full valid directory path where FASTA files are stored. Files must be text files with .FASTA extension")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
 args = parserPS.parse_args()
-
 
 #Verify + Create directories
 def pipeStart(name, filePath):
@@ -38,9 +41,11 @@ def pipeStart(name, filePath):
             os.mkdir(fullPath + "FASTAfiles")
             os.mkdir(fullPath + "TRFfiles")
             os.mkdir(fullPath + "PROKKAfiles")
+            os.mkdir(fullPath + "PROKKAfiles/FAAs")
             os.mkdir(fullPath + "ORTHOfiles")
             os.mkdir(fullPath + "RVDfiles")
             os.mkdir(fullPath + "DISTALfiles")
+            os.mkdir(fullPath + "Rfiles")
         except OSError:
             print("Creation of the directory failed. Exiting...")
             sys.exit()
@@ -56,25 +61,12 @@ def collectFasta(src, dst):
         if file.endswith(".fa"):
             numberOfFiles+=1
             fileList.append(file)
-            shutil.copyfile(src + "/" + file, dst + "/" + file)
+            shutil.copyfile(src + file, dst + file)
     return numberOfFiles, fileList;
-
-#Run FASTA files through Tandem Repeat Finder
-#Citation:          G. Benson,
-#                   "Tandem repeats finder: a program to analyze DNA sequences"
-#                   Nucleic Acids Research (1999)
-#                   Vol. 27, No. 2, pp. 573-580.
-def tandemRepeatFinder(files):
-    for initFile in files:
-        subprocess.Popen(["trf", fastaPath + initFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
-    for datFile in os.listdir(os.getcwd()):
-        for endFile in files:
-            if endFile in datFile:
-                shutil.move(os.getcwd() + "/" + datFile, TRFfiles + datFile)
 
 #Pipe variables
 projName = args.name
-processors = args.processors
+processors = str(args.processors)
 
 #Main section / execution of code
 #Initiate path variables
@@ -89,11 +81,21 @@ DISTALfiles = pipePath + "DISTALfiles/"
 #Gather FASTA files, copy to project folder for further use
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
 
-#Run Tandem Repeat Finder on FASTA files
-tandemRepeatFinder(FASTAlist)
+#Establish first set of processes for the pipeline and pass their relevant parameters
+tandemProcess = mp.Process(target = trfparse.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
+prokkaProcess = mp.Process(target = PTO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, processors))
+RVDProcess = mp.Process(target = RtoD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
 
-#Call to ProkkaToOrtho script
-PTO.prokka(FASTAlist, FASTAfiles, PROKKAfiles)
+#Start processes
+tandemProcess.start()
+prokkaProcess.start()
+RVDProcess.start()
 
-#Call to RVDtoDIS script
-RtoD.RVDminer(FASTAlist, FASTAfiles, RVDfiles, DISTALfiles)
+#Rejoin processes with main thread, won't continue till each finishes
+tandemProcess.join()
+prokkaProcess.join()
+RVDProcess.join()
+
+#Call R scripts for further parsing of data
+subprocess.Popen(["Rscript", "addScripts/ORTHO.R", pipePath], close_fds=True).communicate()[0]
+subprocess.Popen(["Rscript", "addScripts/TRF&DIS.R", pipePath], close_fds=True).communicate()[0]

@@ -1,0 +1,17 @@
+- check box for structural variations 
+  calling the program in the directory "polarity"
+
+- check box for duplication dynamics in the directory "dirbias" 
+
+
+The output of both files is a postscript file and .dat files.
+The file with the extension *.ScrumbleResult.txt contains
+the alignments over scrumbled sequences 
+with higher score when Left and Right only 
+options are used.
+
+
+- check box for considering double-copy should be done as 
+  pre-processing for input sequencing before running any analysis
+  The program exists in the directroy "doublecopy"
+  

@@ -1,0 +1,26 @@
+*/////////////////////////////////////////////////////////////*
+*                 This is WAMI   version 1.0                  *
+*                       AllscrumblePolarity.pl                *
+*          Copyright by Mohamed I. Abouelhoda  (C) 2007       *
+*  Plz. cite Abouelhoda, Giegerich, Behzadi, and Steyaert,    *
+*                    APBC 2008, and JBCB                      *
+*/////////////////////////////////////////////////////////////*
+
+Synopsis:
+
+This scripts is used for detecting structural variations in terms
+of accumulated variations at one side of the maps (polarity).
+
+
+Usage:
+> AllscrumblePolarity.pl MapsFileinFasta CostFile NameofTempFiles arlem_in_full_path 
+
+Note: NameofTempFile indicated the prefix of temporary files 
+      generated. These files store the scrumbled sequences and
+      their alignment.  
+
+      arlem_in_full_path: arlem and its path
+
+Destination Directories:
+      Output is reported in the directory where sequence file exist.
+      The temporary files are stored anywhere according to the given path

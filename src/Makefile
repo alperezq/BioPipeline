@@ -1,0 +1,27 @@
+#WORDSIZE=-m64
+#WORDSIZE=-m32
+#CPPFLAGS=-Wall -Os -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 ${WORDSIZE}
+CPPFLAGS=  ${WORDSIZE}
+LDFLAGS=${WORDSIZE}
+
+CC=g++
+LD=$(CC)
+
+ARLEMOBJECTS=MSATcompare.o\
+	     ThroughputAlignment.o\
+	     TestingDupHist.o
+
+EXECFILES=arlem
+
+all:	$(EXECFILES)
+	
+arlem:	$(ARLEMOBJECTS) 
+	$(LD) $(LDFLAGS) $(ARLEMOBJECTS) -o $@
+
+
+
+clean_all:
+	rm -f $(ARLEMOBJECTS) $(EXECFILES)
+clean:
+	rm -f $(ARLEMOBJECTS) $(EXECFILES)
+

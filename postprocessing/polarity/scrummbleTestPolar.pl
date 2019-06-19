@@ -1,0 +1,197 @@
+#!/usr/bin/perl
+$argc = @ARGV;
+
+if ($argc != 7)   
+{
+    print "usage: \n perl scrummbleTest.pl sequence_file cost_file number_of_iterations outputfilename use_modular_structure_flag breakeven_flag arlem_in_full_path\n";
+    exit;
+}
+my $seq_file = $ARGV[0];
+my $costfile = $ARGV[1];
+my $numberofsimulations=$ARGV[2];
+my $outputfile=$ARGV[3];
+my $modular_struct_flag=$ARGV[4];
+my $breakeven_flag=$ARGV[5];
+
+my $arlem=$ARGV[6];
+
+my $strongflag=1;
+my $len_threshold=8;
+
+
+open(seqIN, "<$seq_file");
+my @Seqs=<seqIN>;
+close(seqIN);
+
+open(seqOut, ">$outputfile");
+
+
+if(1){ # to skip computation
+
+my @unique_types;
+my @unique_type_length;
+my $tmplen;
+# read each sequence and scrumble its unit types
+
+foreach $seq (@Seqs){
+    if($seq=~/>/){
+	#print $seq;
+    }
+    else{
+	my @types=split(/\s+/,$seq);
+	$seqlen=scalar(@types);
+	push(@unique_types,$types[0]);
+	
+	for($i=1;$i<$seqlen;$i++){
+	    if($types[$i] ne $types[$i-1]){
+		push(@unique_types,$types[$i]);
+	    }
+	}
+	foreach $utype (@unique_types){
+	    push(@unique_type_length,1);	    
+	}
+	my $j=0;
+	for($i=1;$i<$seqlen;$i++){
+	    if($types[$i] ne $types[$i-1]){
+		#push(@unique_types,$types[$i]);
+		$j++;
+	    }
+	    else{
+		$unique_type_length[$j]++;
+	    }
+	}
+	$j=0;
+
+
+
+
+	# swap types
+	# crunch big chunks
+	if($numberofsimulations>0){	    
+	    if((1)&&($strongflag==1)){
+		$adaptivelen=scalar(@unique_types);	
+		#foreach $utype (@unique_types){
+		for($i=0;$i<$adaptivelen;$i++){
+		    if($unique_type_length[$j]>$len_threshold){
+			$utype=$unique_types[$i];
+			push(@unique_type_length,$unique_type_length[$j]-$len_threshold);
+			push(@unique_types,$utype);
+			$unique_type_length[$j]=$len_threshold;
+			$adaptivelen++;
+		    }
+		    $j++;
+		}
+	    }
+	}
+       
+	$tmplen=scalar(@unique_types);	
+
+	## swap one round
+	if((1)&&($numberofsimulations>0)){
+	    for($k=0;$k<$tmplen;$k++){
+		$pos1=$k;
+		if($k<$tmplen/2){
+		    $pos2=$k+int (rand($tmplen-$k));	    
+		}
+		else{
+		    $pos2=int(rand($tmplen));	    
+		}
+		if($pos1==$pos2){
+		    $k--;
+		    next;
+		}
+		#print "length: ".$tmplen.",  ".$pos1." ".$pos2."\n";
+		if(($pos1<$tmplen) && ($pos2<$tmplen)&&(1)){ # the last and is a flag to take/skip swap
+		    $tmpswap=$unique_types[$pos1];
+		    $unique_types[$pos1]=$unique_types[$pos2];;
+		    $unique_types[$pos2]=$tmpswap;
+		    
+		    
+		    $tmpswap2=$unique_type_length[$pos1];
+		    $unique_type_length[$pos1]=$unique_type_length[$pos2];
+		    $unique_type_length[$pos2]=$tmpswap2;
+		    
+		}
+		   
+	    }
+	}
+	## swap second round
+	for($k=0;$k<$numberofsimulations;$k++){
+	    $pos1=int (rand($tmplen));
+	    $pos2=int (rand($tmplen));	    
+	    if($pos1==$pos2){
+		$k--;
+		next;
+	    }
+	    #print "length: ".$tmplen.",  ".$pos1." ".$pos2."\n";
+	    if(($pos1<$tmplen) && ($pos2<$tmplen)&&(1)){ # the last and is a flag to take/skip swap
+		$tmpswap=$unique_types[$pos1];
+		$unique_types[$pos1]=$unique_types[$pos2];;
+		$unique_types[$pos2]=$tmpswap;
+		
+		
+		$tmpswap2=$unique_type_length[$pos1];
+		$unique_type_length[$pos1]=$unique_type_length[$pos2];
+		$unique_type_length[$pos2]=$tmpswap2;
+	
+	    }
+		   
+	}
+	# end swap
+	
+	# display after swap
+	$j=0;
+	if(0){ # ms format
+	    foreach $utype (@unique_types){
+		print seqOut  $utype."(".$unique_type_length[$j].") ";
+		$j++;
+	    }
+	    print seqOut "\n";
+	}
+	else{ # fasta like format
+	    #print seqOut "> seq \n";
+	    foreach $utype (@unique_types){
+		if($modular_struct_flag){
+		    $unique_type_length[$j]=1;
+		}	       
+		for($z=0;$z<$unique_type_length[$j];$z++){
+		    print seqOut  $utype." ";
+		}
+		$j++;
+	    }
+	    print seqOut "\n";	    
+	}
+
+	#end display after swap
+
+	for($i=0;$i<$tmplen;$i++){
+	    pop(@unique_types);
+	    pop(@unique_type_length);
+	}
+	
+	
+    }
+    #$sqcounter++;
+    
+}
+
+close(seqOut);
+
+#exit;
+# report sequence file
+print "Runing: arelm.....................\n";
+
+# run arlem one time 
+$argstring="$arlem -f $outputfile  -cfile $costfile  -align -rle -breakeven > $outputfile.align.both";
+print "Running: $argstring\n";
+$retcode=system($argstring);
+
+if($retcode ne 0){
+	    print STDERR "\n failure: $argstring\n";
+	    exit -1;
+	}
+
+} # to skip
+
+
+exit(0);

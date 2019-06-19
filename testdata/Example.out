@@ -1,0 +1,129 @@
+*/////////////////////////////////////////////////////////////*
+***************************************************************
+********                                               ********
+********                      ARLEM                    ********
+********                                               ********
+***************************************************************
+*/////////////////////////////////////////////////////////////*
+*                   This is ARLEM version 1.0                 *
+*                                                             *
+*        Copyright by Mohamed I. Abouelhoda  (C) 2007         *
+*                                                             *
+*       Unauthorized commercial usage and distribution        *
+*              of this program is prohibited.                 *
+*             Contact the author for a license.               *
+*           Please report bugs and suggestions to             *
+*                <mohamed.ibrahim@uni-ulm.de>                 *
+*   Plz. cite Abouelhoda, Giegerich, Behzadi, and Steyaert    *
+*/////////////////////////////////////////////////////////////*
+***************************************************************
+#------------ Start Processing --------- 
+Processed Seq.: 1 Score: 94, including costs for special unit "$"
+Processed Seq.: 2 Score: 106, including costs for special unit "$"
+Processed Seq.: 3 Score: 129, including costs for special unit "$"
+Time for duplication history in sec.: 0
+#------------ Alignment Phase ----------- 
+Aligning Seq1: 0  Seq2: 1
+
+#----------- The operations ------------
+Match             : (15, 17) score: 42
+Match             : (14, 16) score: 42
+Left dup. in R    : [14..15] score: 42
+#                   14 -> 15, d(14,15)=0
+Match             : (13, 14) score: 41
+Left dup. in S    : [7..12] score: 41
+#                   7 -> 8, d(7,8)=0
+#                   8 -> 9, d(8,9)=10
+#                   9 -> 10, d(9,10)=0
+#                   10 -> 11, d(10,11)=0
+#                   11 -> 12, d(11,12)=0
+Match             : (7, 13) score: 26
+Match             : (6, 12) score: 26
+Match             : (5, 11) score: 26
+Match             : (4, 10) score: 16
+Left dup. in R    : [8..9] score: 16
+#                   8 -> 9, d(8,9)=0
+Match             : (3, 8) score: 15
+Left dup. in R    : [2..7] score: 15
+#                   2 -> 3, d(2,3)=10
+#                   3 -> 4, d(3,4)=0
+#                   4 -> 5, d(4,5)=0
+#                   5 -> 6, d(5,6)=0
+#                   6 -> 7, d(6,7)=0
+Match             : (2, 2) score: 0
+Match             : (1, 1) score: 0
+Match             : (0, 0) score: 0
+
+Note the unit at position 0 is the artificial unit "$"
+Score of aligning Seq:0, Seq:1 =42
+#---------------------------------------- 
+Aligning Seq1: 0  Seq2: 2
+
+#----------- The operations ------------
+Match             : (15, 20) score: 57
+Left dup. in R    : [17..19] score: 57
+#                   17 -> 18, d(17,18)=0
+#                   18 -> 19, d(18,19)=0
+Match             : (14, 17) score: 55
+Left dup. in R    : [9..16] score: 55
+#                   9 -> 10, d(9,10)=0
+#                   10 -> 12, d(10,12)=0
+#                   10 -> 11, d(10,11)=10
+#                   12 -> 15, d(12,15)=0
+#                   12 -> 13, d(12,13)=10
+#                   13 -> 14, d(13,14)=0
+#                   15 -> 16, d(15,16)=0
+Match             : (13, 9) score: 28
+Match             : (12, 8) score: 28
+Left dup. in S    : [9..11] score: 28
+#                   9 -> 10, d(9,10)=0
+#                   10 -> 11, d(10,11)=0
+Match             : (9, 7) score: 26
+Left dup. in S    : [4..8] score: 26
+#                   4 -> 5, d(4,5)=0
+#                   5 -> 6, d(5,6)=0
+#                   6 -> 7, d(6,7)=0
+#                   7 -> 8, d(7,8)=0
+Match             : (4, 6) score: 22
+Match             : (3, 5) score: 12
+Left dup. in R    : [2..4] score: 12
+#                   2 -> 3, d(2,3)=10
+#                   3 -> 4, d(3,4)=0
+Match             : (2, 2) score: 0
+Match             : (1, 1) score: 0
+Match             : (0, 0) score: 0
+
+Note the unit at position 0 is the artificial unit "$"
+Score of aligning Seq:0, Seq:2 =57
+#---------------------------------------- 
+Aligning Seq1: 1  Seq2: 2
+
+#----------- The operations ------------
+Match             : (17, 20) score: 43
+Left dup. in R    : [17..19] score: 43
+#                   17 -> 18, d(17,18)=0
+#                   18 -> 19, d(18,19)=0
+Match             : (16, 17) score: 41
+Match             : (15, 16) score: 41
+Match             : (14, 15) score: 41
+Match             : (13, 14) score: 41
+Match             : (12, 13) score: 41
+Match             : (11, 12) score: 41
+Match             : (10, 11) score: 21
+Match             : (9, 10) score: 21
+Match             : (8, 9) score: 21
+Match             : (7, 8) score: 21
+Match             : (6, 7) score: 21
+Left dup. in R    : [5..6] score: 21
+#                   5 -> 6, d(5,6)=0
+Match             : (5, 5) score: 20
+Match             : (4, 4) score: 0
+Match             : (3, 3) score: 0
+Match             : (2, 2) score: 0
+Match             : (1, 1) score: 0
+Match             : (0, 0) score: 0
+
+Note the unit at position 0 is the artificial unit "$"
+Score of aligning Seq:1, Seq:2 =43
+#---------------------------------------- 
+Time for alignment in sec.: 0
