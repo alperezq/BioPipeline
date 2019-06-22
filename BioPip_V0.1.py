@@ -17,7 +17,7 @@ sys.dont_write_bytecode = True
 #Parser from argparse for command line refinement
 parserPS = argparse.ArgumentParser()
 parserPS.add_argument("name", help="Name of project, must be non-existant directory")
-parserPS.add_argument("fasta", help="Full valid directory path where FASTA files are stored. Files must be text files with .FASTA extension")
+parserPS.add_argument("fasta", help="Full valid directory path where FASTA files are stored. Files must be text files, FASTA formatted, with extension .fasta, .fna, .fa or .fas")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
 args = parserPS.parse_args()
 
@@ -56,9 +56,10 @@ def pipeStart(name, filePath):
 #Checks FASTA path for .FASTA txt files, creates new directory in project directory with copies of files
 def collectFasta(src, dst):
     numberOfFiles = 0
+    fileExt = [".fa", ".fasta", ".fas", "fna"]
     fileList = []
     for file in os.listdir(src):
-        if file.endswith(".fa"):
+        if file.lower().endswith(tuple(fileExt)):
             numberOfFiles+=1
             fileList.append(file)
             shutil.copyfile(src + file, dst + file)
@@ -82,7 +83,7 @@ DISTALfiles = pipePath + "DISTALfiles/"
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
 
 #Establish first set of processes for the pipeline and pass their relevant parameters
-tandemProcess = mp.Process(target = trfparse.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
+tandemProcess = mp.Process(target = trfParse.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
 prokkaProcess = mp.Process(target = PTO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, processors))
 RVDProcess = mp.Process(target = RtoD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
 

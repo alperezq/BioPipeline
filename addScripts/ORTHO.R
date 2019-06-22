@@ -9,6 +9,7 @@ pacman::p_load(ggplot2,pheatmap, plyr, ComplexHeatmap, reshape2, ape, dplyr, str
 args <- commandArgs(trailingOnly = TRUE)
 
 projectPath = args[1]
+projectPath = "/Users/tyr/Documents/CSU/Plant/TEST/"
 
 orthoPath = paste(projectPath, "ORTHOfiles/", sep = "")
 RPath = paste(projectPath, "Rfiles/", sep = "")

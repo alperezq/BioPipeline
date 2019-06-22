@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import sys
 
 sys.dont_write_bytecode = True
 
@@ -25,7 +26,10 @@ def tandemRepeatFinder(src, dst, files):
     for initFile in files:
         subprocess.Popen(["TandemRepeatsFinder", src + initFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
     for datFile in os.listdir(os.getcwd()):
+        print datFile
         for endFile in files:
+            print endFile
             if endFile in datFile:
+                print(datFile)
                 shutil.move(os.getcwd() + "/" + datFile, dst + datFile)
     trfParse(dst)
