@@ -82,7 +82,7 @@ dev.off()
 
 
 #DisTAL data manipulations
-Groups <- read.delim(paste(DisTALPath, "Outputs/disTALOut.TALgroups.txt", sep =""))
+Groups <- read.csv(paste(DisTALPath, "Outputs/disTALOut.TALgroups.csv", sep =""))
 Groups$Group<-gsub("^.* ","",Groups$TAL.Group)
 Groups$Genome<-str_split_fixed(Groups$TAL.Group,"\\|",2)[,1]
 Groups$Group<-paste("TALGroup_",Groups$Group,sep="")
