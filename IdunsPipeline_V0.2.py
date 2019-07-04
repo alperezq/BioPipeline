@@ -1,9 +1,6 @@
 #!/usr/bin/python
 #Bioinformatics Pipeline
-from addScripts import ProkkaToOrtho as PTO
-from addScripts import RVDtoDIS as RtoD
-from addScripts import IdunsKSNP3 as Iduns
-from addScripts import trfParse
+from addScripts import IdunsBagOfTricks as IDBT
 import os, shutil #Necessary for directory checks and file movements
 import time #To breakup processes and make output readable
 import sys #Allows exiting of code in case of irreconcilable error
@@ -96,26 +93,25 @@ RESULTSfiles = pipepath + "Results/"
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
 
 #Establish first set of processes for the pipeline and pass their relevant parameters
-tandemProcess = mp.Process(target = trfParse.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
-prokkaProcess = mp.Process(target = PTO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs))
-RVDProcess = mp.Process(target = RtoD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-IdunsProcess = mp.process(target = Iduns.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs))
+tandemProcess = mp.Process(target = IDBT.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
+prokkaProcess = mp.Process(target = IDBT.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs))
+RVDProcess = mp.Process(target = IDBT.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
+KSPN3Process = mp.process(target = IDBT.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs))
 
 #Start processes
 tandemProcess.start()
 prokkaProcess.start()
 RVDProcess.start()
-IdunsProcess.start()
+KSPN3Process.start()
 
 #Rejoin processes with main thread, won't continue till each finishes
 tandemProcess.join()
 prokkaProcess.join()
 RVDProcess.join()
-IdunsProcess.start()
+KSNP3Process.join()
 
-#Call R scripts for further parsing of data
-subprocess.Popen(["Rscript", "addScripts/ORTHO.R", pipePath], close_fds=True).communicate()[0]
-subprocess.Popen(["Rscript", "addScripts/TRF&DIS.R", pipePath], close_fds=True).communicate()[0]
+#Call R script for further parsing of data
+subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
 
 #Call Scoary if it is supplied the necessary CSV
 #Add check if the file is a CSV or not, then copy CSV to SCOARYfiles, add tree file
