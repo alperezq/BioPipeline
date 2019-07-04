@@ -72,9 +72,10 @@ projName = args.name
 processors = str(args.processors)
 
 if processors <= 10:
-    CPUs = 10
+    CPUs = processors
 else:
-    CPUs = (processors/2)
+    CPUs = (int(processors)/2)
+CPUs = str(CPUs)
 
 #Main section / execution of code
 #Initiate path variables
@@ -87,7 +88,7 @@ RVDfiles = pipePath + "RVDfiles/"
 DISTALfiles = pipePath + "DISTALfiles/"
 KSNP3files = pipePath + "KSNP3files/"
 SCOARYfiles = pipePath + "SCOARYfiles/"
-RESULTSfiles = pipepath + "Results/"
+RESULTSfiles = pipePath + "Results/"
 
 #Gather FASTA files, copy to project folder for further use
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
@@ -116,5 +117,5 @@ subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=T
 #Call Scoary if it is supplied the necessary CSV
 #Add check if the file is a CSV or not, then copy CSV to SCOARYfiles, add tree file
 if args.scoary is not None:
-    if arg.scoary.endswith(.csv):
+    if arg.scoary.lower().endswith(".csv"):
         subprocess.Popen(["Scoary", "-t", args.scoary, "-g", Rfiles + "boundmatrix.csv", "-s", "-2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
