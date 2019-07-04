@@ -2,6 +2,7 @@
 #Bioinformatics Pipeline
 from addScripts import ProkkaToOrtho as PTO
 from addScripts import RVDtoDIS as RtoD
+from addScripts import IdunsKSNP3 as Iduns
 from addScripts import trfParse
 import os, shutil #Necessary for directory checks and file movements
 import time #To breakup processes and make output readable
@@ -17,8 +18,9 @@ sys.dont_write_bytecode = True
 #Parser from argparse for command line refinement
 parserPS = argparse.ArgumentParser()
 parserPS.add_argument("name", help="Name of project, must be non-existant directory")
-parserPS.add_argument("fasta", help="Full valid directory path where FASTA files are stored. Files must be text files, FASTA formatted, with extension .fasta, .fna, .fa or .fas")
+parserPS.add_argument("fasta", help="Full valid directory path where FASTA files are stored. Files must be text files with .FASTA extension")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
+parserPS.add_argument("-s","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary will not run without this, and columns must match boundmatrix.csv that is generated")
 args = parserPS.parse_args()
 
 #Verify + Create directories
@@ -46,6 +48,9 @@ def pipeStart(name, filePath):
             os.mkdir(fullPath + "RVDfiles")
             os.mkdir(fullPath + "DISTALfiles")
             os.mkdir(fullPath + "Rfiles")
+            os.mkdir(fullPath + "KSNP3files")
+            os.mkdir(fullPath + "SCOARYfiles")
+            os.mkdir(fullPath + "Results")
         except OSError:
             print("Creation of the directory failed. Exiting...")
             sys.exit()
@@ -69,6 +74,11 @@ def collectFasta(src, dst):
 projName = args.name
 processors = str(args.processors)
 
+if processors <= 10:
+    CPUs = 10
+else:
+    CPUs = (processors/2)
+
 #Main section / execution of code
 #Initiate path variables
 pipePath, fastaPath = pipeStart(args.name, args.fasta)
@@ -78,25 +88,37 @@ PROKKAfiles = pipePath + "PROKKAfiles/"
 ORTHOfiles = pipePath + "ORTHOfiles/"
 RVDfiles = pipePath + "RVDfiles/"
 DISTALfiles = pipePath + "DISTALfiles/"
+KSNP3files = pipePath + "KSNP3files/"
+SCOARYfiles = pipePath + "SCOARYfiles/"
+RESULTSfiles = pipepath + "Results/"
 
 #Gather FASTA files, copy to project folder for further use
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
 
 #Establish first set of processes for the pipeline and pass their relevant parameters
 tandemProcess = mp.Process(target = trfParse.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
-prokkaProcess = mp.Process(target = PTO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, processors))
+prokkaProcess = mp.Process(target = PTO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs))
 RVDProcess = mp.Process(target = RtoD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
+IdunsProcess = mp.process(target = Iduns.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs))
 
 #Start processes
 tandemProcess.start()
 prokkaProcess.start()
 RVDProcess.start()
+IdunsProcess.start()
 
 #Rejoin processes with main thread, won't continue till each finishes
 tandemProcess.join()
 prokkaProcess.join()
 RVDProcess.join()
+IdunsProcess.start()
 
 #Call R scripts for further parsing of data
 subprocess.Popen(["Rscript", "addScripts/ORTHO.R", pipePath], close_fds=True).communicate()[0]
 subprocess.Popen(["Rscript", "addScripts/TRF&DIS.R", pipePath], close_fds=True).communicate()[0]
+
+#Call Scoary if it is supplied the necessary CSV
+#Add check if the file is a CSV or not, then copy CSV to SCOARYfiles, add tree file
+if args.scoary is not None:
+    if arg.scoary.endswith(.csv):
+        subprocess.Popen(["Scoary", "-t", args.scoary, "-g", Rfiles + "boundmatrix.csv", "-s", "-2", "-o", SCOARYfiles], close_fds=True).communicate()[0]

@@ -612,7 +612,7 @@ a <-(hclust(as.dist(exprs))) #Cut tree and get groups
 CUT<-as.data.frame(cutree(a,h="$height"))
 Groups <- as.data.frame(cbind(rownames(exprs),CUT[,1]))
 colnames(Groups)<-c("TAL","Group")
-write.table(Groups, "$Outname.TALgroups.txt", row.names = FALSE,quote = FALSE)
+write.csv(Groups, "$Outname.TALgroups.csv", row.names = FALSE)
 #bt<-boot.phylo(tr, exprs, FUN = function(xx) nj(exprs), B = 1000)
 write.tree(tr, file="$Outname.tre")
 EOF
