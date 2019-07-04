@@ -1,6 +1,9 @@
 #!/usr/bin/python
 #Bioinformatics Pipeline
-from addScripts import IdunsBagOfTricks as IDBT
+from addScripts import IdunsProkkaOrtho as IPO
+from addScripts import IdunsRVDtoDIS as IRD
+from addScripts import IdunsTandems as IT
+from addScripts import IdunsKSNP3 as IK3
 import os, shutil #Necessary for directory checks and file movements
 import time #To breakup processes and make output readable
 import sys #Allows exiting of code in case of irreconcilable error
@@ -94,10 +97,10 @@ RESULTSfiles = pipePath + "Results/"
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
 
 #Establish first set of processes for the pipeline and pass their relevant parameters
-tandemProcess = mp.Process(target = IDBT.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
-prokkaProcess = mp.Process(target = IDBT.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs))
-RVDProcess = mp.Process(target = IDBT.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-KSPN3Process = mp.process(target = IDBT.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs))
+tandemProcess = mp.Process(target = IT.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
+prokkaProcess = mp.Process(target = IPO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
+RVDProcess = mp.Process(target = IRD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
+KSPN3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
 
 #Start processes
 tandemProcess.start()
