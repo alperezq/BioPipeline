@@ -7,9 +7,9 @@ library(pheatmap)
 library(ComplexHeatmap)
 library(reshape2)
 library(ape)
-library(dplyr)
 library(stringr)
 library(plyr)
+library(dplyr)
 library(argparse)
 
 #Use of argparse to create parser to read in project path

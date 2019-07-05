@@ -14,7 +14,7 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
     with open(ksnpGenomes, "w") as outFile:
         for file in ksnpList:
             prefixKSNP = file.split(".")
-            outFile.write(os.path.abspath(faPathPath + file) + "\t" + prefixKSNP[0] + "\n")
+            outFile.write(os.path.abspath(faPath + file) + "\t" + prefixKSNP[0] + "\n")
     subprocess.Popen(["MakeFasta", ksnpGenomes, ksnpPath + "ForKchoser"], close_fds=True).communicate()[0]
     subprocess.Popen(["Kchooser", ksnpPath + "ForKchoser"], close_fds=True).communicate()[0]
     shutil.move("Kchooser.report", ksnpPath + "Kchooser.report")

@@ -89,6 +89,7 @@ PROKKAfiles = pipePath + "PROKKAfiles/"
 ORTHOfiles = pipePath + "ORTHOfiles/"
 RVDfiles = pipePath + "RVDfiles/"
 DISTALfiles = pipePath + "DISTALfiles/"
+Rfiles = pipePath + "Rfiles/"
 KSNP3files = pipePath + "KSNP3files/"
 SCOARYfiles = pipePath + "SCOARYfiles/"
 RESULTSfiles = pipePath + "Results/"
@@ -118,7 +119,6 @@ KSNP3Process.join()
 subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
 
 #Call Scoary if it is supplied the necessary CSV
-#Add check if the file is a CSV or not, then copy CSV to SCOARYfiles, add tree file
 if args.scoary is not None:
-    if arg.scoary.lower().endswith(".csv"):
+    if args.scoary.lower().endswith(".csv"):
         subprocess.Popen(["Scoary", "-t", args.scoary, "-g", Rfiles + "boundmatrix.csv", "-s", "-2", "-o", SCOARYfiles], close_fds=True).communicate()[0]

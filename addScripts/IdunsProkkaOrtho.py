@@ -11,7 +11,7 @@ sys.dont_write_bytecode = True
 def prokka(ProkkaFiles, ProkkaSrc, ProkkaDst, ortho, ProkkaOrthoCpus):
     for file in ProkkaFiles:
         ProkkaPrefix = file.split(".")
-        subprocess.Popen(["prokka", "--outdir", ProkkaDst + file, "--compliant", "--prefix", ProkkaPrefix[0], "--force", "--genus", "Xanthomonus", "--species", "Oryzae", "--strain", prefix[0], "--cpus", ProkkaCpus, "--rfam", ProkkaSrc + file], close_fds=True).communicate()[0]
+        subprocess.Popen(["prokka", "--outdir", ProkkaDst + file, "--compliant", "--prefix", ProkkaPrefix[0], "--force", "--genus", "Xanthomonus", "--species", "Oryzae", "--strain", ProkkaPrefix[0], "--cpus", ProkkaOrthoCpus, "--rfam", ProkkaSrc + file], close_fds=True).communicate()[0]
         for item in os.listdir(ProkkaDst + file + "/"):
             if item.endswith(".faa"):
                 shutil.copyfile(ProkkaDst + file + "/" + item, ProkkaDst + "FAAs/" + item)
