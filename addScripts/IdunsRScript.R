@@ -27,14 +27,16 @@ orthoGC <- read.delim(paste(orthoPath,"Orthogroups.GeneCount.csv", sep=""))
 repeatsTRF <- read.delim(paste(TRFPath,"trfParsed.txt", sep = ""), header = FALSE, sep = " ")
 disOut <- as.matrix(read.table(paste(DisTALPath, "Outputs/disTALOut.mat", sep = ""), header=TRUE, sep = "\t",row.names = 1, as.is=TRUE))
 statsPerSpecies <- read.delim(paste(orthoPath,"Statistics_PerSpecies.csv", sep=""))
+Groups <- read.delim(paste(DisTALPath, "Outputs/disTALOut.TALgroups.csv", sep =""))
 
 
-
+#Manipulation of orthoGC to Matrix
 orthoGCMatrix <- as.matrix(orthoGC[,2:(ncol(orthoGC)-1)], rownames.force = 0, nrow(5), ncol(5))
 orthoGCMatrix[orthoGCMatrix>1]<-1
 Z1Orth <- orthoGC[,1:(ncol(orthoGC)-1)]
 Z1Orth[,2:ncol(Z1Orth)] <-apply(Z1Orth[,2:ncol(Z1Orth)], 2, function(x) ifelse(x > 1, 1, x))
 
+#statsPerSpecies manipulations and creation
 statsPerc <- statsPerSpecies[statsPerSpecies$X == "Percentage of genes in species-specific orthogroups",]
 statsPerc <- as.data.frame(t(statsPerc))
 write.csv(statsPerc, paste(RPath, "statsPerSpeciesR.csv", sep = ""),  row.names = TRUE)
@@ -82,7 +84,6 @@ dev.off()
 
 
 #DisTAL data manipulations
-Groups <- read.csv(paste(DisTALPath, "Outputs/disTALOut.TALgroups.csv", sep =""))
 Groups$Group<-gsub("^.* ","",Groups$TAL.Group)
 Groups$Genome<-str_split_fixed(Groups$TAL.Group,"\\|",2)[,1]
 Groups$Group<-paste("TALGroup_",Groups$Group,sep="")
