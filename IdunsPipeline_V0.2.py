@@ -9,7 +9,7 @@ import time #To breakup processes and make output readable
 import sys #Allows exiting of code in case of irreconcilable error
 import argparse #Allows use of command line style argument call
 import subprocess #For execution of outside scripts
-import multiprocessing as mp #Run proceses & run multiple processes at once
+import multiprocessing as mp #Run processes & run multiple processes at once
 import time
 
 #Prevents creation of .pyc files when running
@@ -100,13 +100,13 @@ genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
 tandemProcess = mp.Process(target = IT.tandemRepeatFinder, args = (fastaPath, TRFfiles, FASTAlist,))
 prokkaProcess = mp.Process(target = IPO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
 RVDProcess = mp.Process(target = IRD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-KSPN3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
+KSNP3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
 
 #Start processes
 tandemProcess.start()
 prokkaProcess.start()
 RVDProcess.start()
-KSPN3Process.start()
+KSNP3Process.start()
 
 #Rejoin processes with main thread, won't continue till each finishes
 tandemProcess.join()
