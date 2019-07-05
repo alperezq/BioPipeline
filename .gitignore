@@ -1,3 +1,4 @@
 projects/
 *.DS_Store
 *.Rhistory
+*.csv
