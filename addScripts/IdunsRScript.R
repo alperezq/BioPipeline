@@ -97,6 +97,7 @@ orthoGCMatrix <- as.matrix(orthoGC[,1:(ncol(orthoGC)-1)], rownames.force = 0, nr
 colnames(orthoGCMatrix) <- gsub(pattern = "\\.", "-", x = colnames(orthoGCMatrix))
 colnames(GroupMat)[colnames(GroupMat)=="Group"] <- "V1"
 colnames(orthoGCMatrix)[colnames(orthoGCMatrix)=="X"] <- "V1"
-boundMatrix <- rbind(orthoGCMatrix, matTRF, GroupMat, sep = ",", stringsAsFactors = FALSE)
+write.csv(orthoGCMatrix, paste(RPath, "OrthoGCMatrx.csv", sep=""), row.names = TRUE)
+boundMatrix <- rbind(orthoGCMatrix, matTRF, GroupMat, sep = ",", stringsAsFactors = FALSE, row.names = FALSE)
 boundMatrixFix <- slice(boundMatrix, 1:(n()-1))
 write.csv(boundMatrixFix, paste(RPath, "boundMatrix.csv", sep = ""), row.names = FALSE)

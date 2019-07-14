@@ -10,6 +10,7 @@ import sys #Allows exiting of code in case of irreconcilable error
 import argparse #Allows use of command line style argument call
 import subprocess #For execution of outside scripts
 import multiprocessing as mp #Run processes & run multiple processes at once
+import pandas as pd
 import time
 
 #Prevents creation of .pyc files when running
@@ -118,7 +119,15 @@ KSNP3Process.join()
 #Call R script for further parsing of data
 subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
 
-#Call Scoary if it is supplied the necessary CSV
+#Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
 if args.scoary is not None:
     if args.scoary.lower().endswith(".csv"):
-        subprocess.Popen(["Scoary", "-t", args.scoary, "-g", Rfiles + "boundmatrix.csv", "-s", "-2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+        boundCSV = pd.read_csv(Rfiles + "boundMatrix.csv", index_col=0)
+        traitCSV = pd.read_csv(args.scoary, index_col=0)
+        boundCols = list(boundCSV.columns)
+        traitRows = list(traitCSV.index)
+        boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
+        if boundTraitCompare is 0:
+            subprocess.Popen(["scoary", "-t", args.scoary, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+        else:
+            print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")

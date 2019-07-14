@@ -1,0 +1,7 @@
+07/14/2019 01:39:23 PM    ==== Scoary started ====
+07/14/2019 01:39:23 PM    Command: /usr/local/bin/scoary
+07/14/2019 01:39:23 PM    CRITICAL:
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.5/dist-packages/scoary/methods.py", line 127, in main
+    sys.exit(("The following arguments are required: -t/--traits, "
+SystemExit: The following arguments are required: -t/--traits, -g/--genes
