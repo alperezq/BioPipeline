@@ -140,6 +140,6 @@ if args.scoary is not None:
         traitRows = list(traitCSV.index)
         boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
         if boundTraitCompare is 0:
-            subprocess.Popen(["scoary", "-t", args.scoary, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+            subprocess.Popen(["scoary", "-t", args.scoary, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-n", KSNP3files + "kSNP3_Results/tree.ML.tre", "-o", SCOARYfiles], close_fds=True).communicate()[0]
         else:
             print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
