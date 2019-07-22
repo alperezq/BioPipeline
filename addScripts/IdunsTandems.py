@@ -2,6 +2,7 @@ import subprocess
 import sys
 import shutil
 import os
+import multiprocessing
 
 
 sys.dont_write_bytecode = True
@@ -12,7 +13,7 @@ sys.dont_write_bytecode = True
 #                   "Tandem repeats finder: a program to analyze DNA sequences"
 #                   Nucleic Acids Research (1999)
 #                   Vol. 27, No. 2, pp. 573-580.
-def tandemRepeatFinder(TandemSrc, TandemDst, TandemFiles):
+def tandemRepeatFinder(TandemSrc, TandemDst, TandemFiles, processes):
     for initFile in TandemFiles:
         subprocess.Popen(["TandemRepeatsFinder", TandemSrc + initFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
     for datFile in os.listdir(os.getcwd()):
@@ -20,7 +21,6 @@ def tandemRepeatFinder(TandemSrc, TandemDst, TandemFiles):
         for endFile in TandemFiles:
             if endFile in datFile:
                 shutil.move(os.getcwd() + "/" + datFile, TandemDst + datFile)
-    trfParse(TandemDst)
 
 
 #Parsing of TRF files to single text file
