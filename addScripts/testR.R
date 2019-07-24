@@ -6,7 +6,6 @@ library(pheatmap)
 library(phangorn)
 library(dendextend)
 library(argparse)
-#541-828896
 
 #collects arguments
 args <- commandArgs(trailingOnly = TRUE)
