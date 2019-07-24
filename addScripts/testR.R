@@ -26,16 +26,16 @@ conCSV <- read.csv("Downloads/Concatenated_createdbyalvaro.csv")
 faaFASTA <- read.FASTA("Downloads/AllFAAs_withnames.fa")
 
 #Creating Ids
-ids <- scoaryCSV[scoaryCSV$Bonferroni_p<0.05,1]
-talIDS <- talGroupsCSV$TAL[paste("TALGroup_",talGroupsCSV$Group,sep="") %in% ids]
+ids <- scoaryCSV[scoaryCSV$Bonferroni_p<0.05]
+talIDS <- talGroupsCSV$Group[paste("TALGroup_",talGroupsCSV$Group,sep="")]
 
 #Manipulation of repeats file
 repeatWithTrf <- left_join(repeatCSV,trfTXT,by=c("Sequence"="V7"))
-repTrfIds <- repeatWithTrf[repeatWithTrf$Name %in% ids,]
-write.csv(repTrfIds, paste(resultDIR, "repTrfIds.csv", sep=""), row.names=TRUE)
+repTrfIds <- repeatWithTrf[repeatWithTrf$Name %in% ids$V1,]
+write.csv(repTrfIds, paste(resultDIR, "repTrfIds.csv", sep=""), row.names=FALSE)
 
 #Manipulation of concatenated file
-rvdFASTA <- rvdFASTA[names(rvdFASTA) %in% talIDS]
+rvdWithIds <- rvdFASTA[rvdFASTA$Name %in% talIDS]
 write.FASTA(rvdFASTA,paste(resultDIR, "rvdIds.FASTA", sep=""))
 
 #Manipulation of Orthogroups.txt
@@ -49,6 +49,11 @@ fastaIds <-data.frame("Short_ID"=str_split_fixed(names(faaFASTA)," ",3)[,2],"fas
 orthoFastaIds <- left_join(fastaIds,orthoMelt,by=c("Short_ID"="value"))
 orthoFastaIds$New_ID<-paste(orthoFastaIds$V1,orthoFastaIds$fastaID,sep=":")
 names(faaFASTA) <- orthoFastaIds$New_ID
+orthoSort <- sort(orthoFastaIds$New_ID[orthoFastaIds$V1 %in% ids])
+faaOrthoSort <- faaFASTA[names(faaFASTA) %in% orthoSort]
+faaOrthoOrder <- faaOrthoSort[order(names(faaOrthoSort))]
+write.FASTA(faaOrthoOrder,paste(resultDIR, "faaIds.FASTA", sep=""))
+
 orthoSort <- sort(orthoFastaIds$New_ID[orthoFastaIds$V1 %in% ids])
 faaOrthoSort <- faaFASTA[names(faaFASTA) %in% orthoSort]
 faaOrthoOrder <- faaOrthoSort[order(names(faaOrthoSort))]
