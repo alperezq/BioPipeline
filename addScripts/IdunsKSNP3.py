@@ -1,4 +1,4 @@
-import subprocess
+ import subprocess
 import sys
 import shutil
 import os
@@ -26,3 +26,11 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
                 ksnpInt = tempInt[0]
     subprocess.Popen(["kSNP3", "-in", ksnpGenomes, "-k", str(ksnpInt), "-outdir", ksnpPath + "kSNP3_results", "-ML", "-CPU", str(ksnpCpus)], close_fds=True).communicate()[0]
     shutil.move("fasta_list", ksnpPath + "fasta_list")
+
+
+#Function for parsing of KSNP3 Results
+def ksnpParse(scoaryDIR, boundFile, treeFile, providedCSV, resultsDIR, parsedTRF, repeatsCSV, distalGroups, comboFile):
+    for file in os.listdir(scoaryDIR):
+        if file.endswith(".csv"):
+            scoaryCSV = scoaryDir +file
+    subprocess.Popen(["Rscript", "addScripts/IdunsScoaryR.R", scoaryCSV, boundFile, treeFile, providedCSV, resultsDIR, parsedTRF, repeatsCSV, distalGroups, comboFile, concatenated, faaFile], close_fds=True).communicate()[0]

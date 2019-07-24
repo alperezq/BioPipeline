@@ -70,15 +70,6 @@ def collectFasta(src, dst):
             shutil.copyfile(src + file, dst + file)
     return numberOfFiles, fileList;
 
-#Run FASTA files through Tandem Repeat Finder
-#Citation:          G. Benson,
-#                   "Tandem repeats finder: a program to analyze DNA sequences"
-#                   Nucleic Acids Research (1999)
-#                   Vol. 27, No. 2, pp. 573-580.
-#Function for calls to TandemRepeatsFinder
-def tandemRepeatFinder(fileToProcess):
-    subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + fileToProcess, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
-
 #Pipe variables
 projName = args.name
 processors = str(args.processors)
@@ -90,7 +81,7 @@ else:
 CPUs = str(CPUs)
 
 #Main section / execution of code
-#Initiate path variables
+#Initiate path variables and file location variables (created after start of main section)
 pipePath, fastaPath = pipeStart(args.name, args.fasta)
 FASTAfiles = pipePath + "FASTAfiles/"
 TRFfiles = pipePath + "TRFfiles/"
@@ -102,6 +93,14 @@ Rfiles = pipePath + "Rfiles/"
 KSNP3files = pipePath + "KSNP3files/"
 SCOARYfiles = pipePath + "SCOARYfiles/"
 RESULTSfiles = pipePath + "Results/"
+repeatCSV = Rfiles + "RepeatNames.csv"
+boundCSV = Rfiles + "boundMatrix.csv"
+traitCSV = args.scoary
+talGroupsCSV = DISTALfiles + "Outputs/disTALout.TALgroups.csv"
+trfTXT = TRFfiles + "trfParsed.txt"
+orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
+kTree = KSNP3files + "kSNP3_results/tree.ML.tre"
+rvdFASTA = DISTALfiles + "rvdCombo.FASTA"
 
 #Gather FASTA files, copy to project folder for further use
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
@@ -119,17 +118,17 @@ IPO.trfParse(TRFfiles, FASTAlist)
 #KSNP3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
 
 #Start processes
-#prokkaProcess.start()
-#RVDProcess.start()
-#KSNP3Process.start()
+prokkaProcess.start()
+RVDProcess.start()
+KSNP3Process.start()
 
 #Rejoin processes with main thread, won't continue till each finishes
-#prokkaProcess.join()
-#RVDProcess.join()
-#KSNP3Process.join()
+prokkaProcess.join()
+RVDProcess.join()
+KSNP3Process.join()
 
 #Call R script for further parsing of data
-#subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
+subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
 
 #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
 if args.scoary is not None:
@@ -140,6 +139,7 @@ if args.scoary is not None:
         traitRows = list(traitCSV.index)
         boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
         if boundTraitCompare is 0:
-            subprocess.Popen(["scoary", "-t", args.scoary, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-n", KSNP3files + "kSNP3_Results/tree.ML.tre", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+            subprocess.Popen(["scoary", "-t", args.scoary, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+            IK3.ksnpParse(SCOARYfiles, repeatCSV, boundCSV, traitCSV, talGroupsCSV, trfTXT, orthogroupsTXT, kTree, rvdFASTA, RESULTSfiles)
         else:
             print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
