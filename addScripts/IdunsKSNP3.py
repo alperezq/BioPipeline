@@ -1,8 +1,9 @@
- import subprocess
+import subprocess
 import sys
 import shutil
 import os
 import re
+import pandas as pd
 
 
 sys.dont_write_bytecode = True
@@ -28,9 +29,21 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
     shutil.move("fasta_list", ksnpPath + "fasta_list")
 
 
-#Function for parsing of KSNP3 Results
-def ksnpParse(scoaryDIR, boundFile, treeFile, providedCSV, resultsDIR, parsedTRF, repeatsCSV, distalGroups, comboFile):
+#Function for routing needed data to R for parsing of various data sets
+def ksnpParse(scoaryDir, rDir, providedCSV, disDir, trfDir, orthoDir, kDir, resultsDIR, rvdDir):
     for file in os.listdir(scoaryDIR):
         if file.endswith(".csv"):
             scoaryCSV = scoaryDir +file
-    subprocess.Popen(["Rscript", "addScripts/IdunsScoaryR.R", scoaryCSV, boundFile, treeFile, providedCSV, resultsDIR, parsedTRF, repeatsCSV, distalGroups, comboFile, concatenated, faaFile], close_fds=True).communicate()[0]
+    repeatsCSV = rDir + "RepeatNames.csv"
+    boundFile = rDir + "boundMatrix.csv"
+    treeFile = kDir + "kSNP3_results/tree.ML.tre"
+    parsedTRF = trfDir + "trfParsed.txt"
+    distalGroups = disDir + "Outputs/disTALOut.TALgroups.csv"
+    comboFile = disDir + "rvdCombo.FASTA"
+    concatenated = concatNuc(rvdDir, rDir)
+    subprocess.Popen(["Rscript", "addScripts/IdunsScoaryR.R", scoaryCSV, repeatsCSV, boundFile, treeFile, providedCSV, resultsDIR, parsedTRF, distalGroups, comboFile, concatenated, faaFile], close_fds=True).communicate()[0]
+
+
+def concatNuc(rvdFiles, results):
+    nucList = [file for file in os.listdir(rvdFiles) if file.endswith.csv]
+    df = pd.concat(map(pd.read_csv, nucList))

@@ -70,17 +70,19 @@ def collectFasta(src, dst):
             shutil.copyfile(src + file, dst + file)
     return numberOfFiles, fileList;
 
+#Main section / execution of code
+
 #Pipe variables
 projName = args.name
 processors = str(args.processors)
 
+#Processor variable, halves if greater than 10 per project guidelines by Alvaro
 if processors <= 10:
     CPUs = processors
 else:
     CPUs = (int(processors)/2)
 CPUs = str(CPUs)
 
-#Main section / execution of code
 #Initiate path variables and file location variables (created after start of main section)
 pipePath, fastaPath = pipeStart(args.name, args.fasta)
 FASTAfiles = pipePath + "FASTAfiles/"
@@ -95,7 +97,7 @@ SCOARYfiles = pipePath + "SCOARYfiles/"
 RESULTSfiles = pipePath + "Results/"
 repeatCSV = Rfiles + "RepeatNames.csv"
 boundCSV = Rfiles + "boundMatrix.csv"
-traitCSV = args.scoary
+providedCSV = args.scoary
 talGroupsCSV = DISTALfiles + "Outputs/disTALout.TALgroups.csv"
 trfTXT = TRFfiles + "trfParsed.txt"
 orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
@@ -113,9 +115,9 @@ if __name__== '__main__':
 IPO.trfParse(TRFfiles, FASTAlist)
 
 #Establish first set of processes for the pipeline and pass their relevant parameters
-#prokkaProcess = mp.Process(target = IPO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
-#RVDProcess = mp.Process(target = IRD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-#KSNP3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
+prokkaProcess = mp.Process(target = IPO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
+RVDProcess = mp.Process(target = IRD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
+KSNP3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
 
 #Start processes
 prokkaProcess.start()
@@ -131,7 +133,7 @@ KSNP3Process.join()
 subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
 
 #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
-if args.scoary is not None:
+if providedCSV is not None:
     if args.scoary.lower().endswith(".csv"):
         boundCSV = pd.read_csv(Rfiles + "boundMatrix.csv", index_col=0)
         traitCSV = pd.read_csv(args.scoary, index_col=0)
@@ -139,7 +141,7 @@ if args.scoary is not None:
         traitRows = list(traitCSV.index)
         boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
         if boundTraitCompare is 0:
-            subprocess.Popen(["scoary", "-t", args.scoary, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
-            IK3.ksnpParse(SCOARYfiles, repeatCSV, boundCSV, traitCSV, talGroupsCSV, trfTXT, orthogroupsTXT, kTree, rvdFASTA, RESULTSfiles)
+            subprocess.Popen(["scoary", "-t", providedCSV, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+            IK3.ksnpParse(SCOARYfiles, RFiles, providedCSV, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles)
         else:
             print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
