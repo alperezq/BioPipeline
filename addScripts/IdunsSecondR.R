@@ -10,48 +10,34 @@ library(argparse)
 #collects arguments
 args <- commandArgs(trailingOnly = TRUE)
 
-scoaryCSV = read.csv("Downloads/Race_9b_03_07_2019_1244.results.csv")
-repeatCSV = read.csv("Downloads/RepeatNames.csv")
-boundCSV = read.csv("Downloads/boundMatrix.csv")
-traitCSV = read.csv("Downloads/Trait.csv")
-talGroupsCSV = read.csv("Downloads/disTALOut.TALgroups.csv", stringsAsFactors = FALSE)
-trfTXT = read.delim("Downloads/trfParsed.txt",sep = " ",header = FALSE)
-orthogroupsTXT = read.delim("Downloads/Orthogroups.txt",sep=" ",header = FALSE)
-kTree = read.tree("Downloads/tree.ML.tre")
-rvdFASTA = read.FASTA("Downloads/rvdCombo.FASTA")
-resultDIR = "Downloads/Results/"
-conCSV = read.csv("Downloads/Concatenated_createdbyalvaro.csv")
-faaFASTA = read.FASTA("Downloads/AllFaaNames.fa")
-
-#Gathering of file/dir paths
-scoaryCSV <- read.csv(args[1])
-repeatCSV <- read.csv(args[2])
-boundCSV <- read.csv(args[3])
-traitCSV <- read.csv(args[4])
-talGroupsCSV <- read.csv(args[5])
-trfTXT <- read.delim(args[6],sep = " ",header = FALSE)
-orthogroupsTXT <- read.delim(args[7],sep=" ",header = FALSE)
-kTree <- read.tree(args[8])
-rvdFASTA <- read.FASTA(args[9])
+scoaryCSV = read.csv(args[1])
+repeatCSV = read.csv(args[2])
+boundCSV = read.csv(args[3])
+traitCSV = read.csv(args[4])
+talGroupsCSV = read.csv(args[5], stringsAsFactors = FALSE)
+trfTXT = read.delim(args[6],sep = " ",header = FALSE)
+orthogroupsTXT = read.delim(args[7],sep=" ",header = FALSE)
+kTree = read.tree(args[8])
+rvdFASTA = read.FASTA(args[9])
 resultDIR = args[10]
-conCSV <- read.delim(args[11],sep="\t")
-faaFASTA <- read.FASTA(args[12])
+conCSV = read.csv(args[11])
+faaFASTA = read.FASTA(args[12])
 
 #Creating Ids
 ids <- scoaryCSV[scoaryCSV$Bonferroni_p<0.05,1]
 talIDS <- talGroupsCSV$TAL[paste("TALGroup_",talGroupsCSV$Group,sep="") %in% ids]
 
-if(length(talIDS) > 0)
-{
-  
-}
+#if(length(talIDS) > 0)
+#{
+#
+#}
 #Manipulation of repeats file
 repeatWithTrf <- left_join(repeatCSV,trfTXT,by=c("Sequence"="V7"))
 repTrfIds <- repeatWithTrf[repeatWithTrf$Name %in% ids,]
 if(nrow(repTrfIds) > 0)
 {
-  write.csv(repTrfIds, paste(resultDIR, "repTrfIds.csv", sep=""), row.names=TRUE) 
-} else {print ("Something")}
+  write.csv(repTrfIds, paste(resultDIR, "repTrfIds.csv", sep=""), row.names=TRUE)
+} else {print ("repTRFIds lacking data, unable to create file")}
 
 #Manipulation of concatenated file
 rvdFASTA <- rvdFASTA[names(rvdFASTA) %in% talIDS]

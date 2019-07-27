@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #Bioinformatics Pipeline
 from addScripts import IdunsProkkaOrtho as IPO
 from addScripts import IdunsRVDtoDIS as IRD
@@ -142,6 +142,6 @@ if providedCSV is not None:
         boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
         if boundTraitCompare is 0:
             subprocess.Popen(["scoary", "-t", providedCSV, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
-            IK3.ksnpParse(SCOARYfiles, RFiles, providedCSV, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles)
+            IK3.ksnpParse(SCOARYfiles, RFiles, providedCSV, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, PROKKAfiles + "FAAs/")
         else:
             print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")

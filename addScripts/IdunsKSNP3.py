@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import subprocess
 import sys
 import shutil
@@ -30,20 +31,45 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
 
 
 #Function for routing needed data to R for parsing of various data sets
-def ksnpParse(scoaryDir, rDir, providedCSV, disDir, trfDir, orthoDir, kDir, resultsDIR, rvdDir):
-    for file in os.listdir(scoaryDIR):
+def ksnpParse(scoaryDir, rDir, providedCSV, disDir, trfDir, orthoDir, kDir, resultsDir, rvdDir, faaDir):
+    for file in os.listdir(scoaryDir):
         if file.endswith(".csv"):
             scoaryCSV = scoaryDir +file
     repeatsCSV = rDir + "RepeatNames.csv"
     boundFile = rDir + "boundMatrix.csv"
-    treeFile = kDir + "kSNP3_results/tree.ML.tre"
-    parsedTRF = trfDir + "trfParsed.txt"
     distalGroups = disDir + "Outputs/disTALOut.TALgroups.csv"
+    parsedTRF = trfDir + "trfParsed.txt"
+    orthogroupsTXT = orthoDir + "Orthogroups.txt"
+    treeFile = kDir + "kSNP3_results/tree.ML.tre"
     comboFile = disDir + "rvdCombo.FASTA"
-    concatenated = concatNuc(rvdDir, rDir)
-    subprocess.Popen(["Rscript", "addScripts/IdunsScoaryR.R", scoaryCSV, repeatsCSV, boundFile, treeFile, providedCSV, resultsDIR, parsedTRF, distalGroups, comboFile, concatenated, faaFile], close_fds=True).communicate()[0]
+    concatenated = concatNuc(rvdDir, resultsDir)
+    faaFile = concatFaa(faaDir, resultsDir)
+    subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, providedCSV, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, resultsDir, concatenated, faaFile], close_fds=True).communicate()[0]
 
-
+#concatenates rvdNuc files to single CSV
 def concatNuc(rvdFiles, results):
-    nucList = [file for file in os.listdir(rvdFiles) if file.endswith.csv]
-    df = pd.concat(map(pd.read_csv, nucList))
+    nucList = []
+    for file in os.listdir(rvdFiles):
+        if file.endswith(".csv"):
+            nucList.append(rvdFiles + file)
+    nucList.sort()
+    combined = pd.concat([pd.read_csv(file) for file in nucList])
+    combined.to_csv(results + "rvdNucs.csv", index=False)
+    return (results + "rvdNucs.csv")
+
+#Creates concatenated FAA file, adding file names to start of appropriate lines
+def concatFaa(faaDir, results):
+    faaList = [file for file in os.listdir(faaDir) if file.lower().endswith(".faa")]
+    faaList.sort()
+    for file in faaList:
+        prefix = file.split(".")
+        with open(faaDir + file, 'r') as item:
+            data = item.read()
+        data = data.replace('>', '>' + prefix[0] + ' ')
+        with open(faaDir + file, 'w') as item:
+            item.write(data)
+    with open(results + "faaConcatenated.faa", 'wb') as outFile:
+        for file in faaList:
+            with open(faaDir + file, 'rb') as inFile:
+                shutil.copyfileobj(inFile, outFile)
+    return(results + "faaConcatenated.faa")

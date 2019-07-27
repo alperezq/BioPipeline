@@ -1,13 +1,23 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 import os
-import pandas as pd
+import shutil
 
-def concatNuc(rvdFiles, results):
-    nucList = [file for file in os.listdir(rvdFiles) if file.endswith.csv]
-    df = pd.concat(map(pd.read_csv, nucList))
-    print(df)
+def concatFaa(prokkaDir, results):
+    faaList = [file for file in os.listdir(prokkaDir) if file.lower().endswith(".faa")]
+    faaList.sort()
+    for file in faaList:
+        prefix = file.split(".")
+        with open(prokkaDir + file, 'r') as item:
+            data = item.read()
+        data = data.replace('>', '>' + prefix[0] + ' ')
+        with open(prokkaDir + file, 'w') as item:
+            item.write(data)
+    with open(results + "faaConcatenated.faa", 'wb') as outFile:
+        for file in faaList:
+            with open(prokkaDir + file, 'rb') as inFile:
+                shutil.copyfileobj(inFile, outFile)
 
-rvdFiles = "projects/idunsTEST/RVDfiles/"
+
+prokkaDir = "projects/idunsTEST/PROKKAfiles/FAAsTEST/"
 results = "projects/idunsTEST/Results/"
-
-concatNuc(rvdFiles, results)
+concatFaa(prokkaDir, results)
