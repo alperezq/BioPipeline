@@ -70,6 +70,24 @@ def collectFasta(src, dst):
             shutil.copyfile(src + file, dst + file)
     return numberOfFiles, fileList;
 
+#Function used via Pool Map to process .fa files through TRF
+def tandemRepeatFinder(tanFile):
+
+#Function for initializing scoary and second round of R modifications
+def scoaryToSecondR(scorFile):
+    if scorFile.lower().endswith(".csv"):
+        boundCSV = pd.read_csv(Rfiles + "boundMatrix.csv", index_col=0)
+        traitCSV = pd.read_csv(scorFile, index_col=0)
+        boundCols = list(boundCSV.columns)
+        traitRows = list(traitCSV.index)
+        boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
+        if boundTraitCompare is 0:
+            subprocess.Popen(["scoary", "-t", providedCSV, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
+            IK3.ksnpParse(SCOARYfiles, RFiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, PROKKAfiles + "FAAs/")
+        else:
+            print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
+
+
 #Main section / execution of code
 
 #Pipe variables
@@ -77,7 +95,7 @@ projName = args.name
 processors = str(args.processors)
 
 #Processor variable, halves if greater than 10 per project guidelines by Alvaro
-if processors <= 10:
+if int(processors) <= 10:
     CPUs = processors
 else:
     CPUs = (int(processors)/2)
@@ -98,11 +116,6 @@ RESULTSfiles = pipePath + "Results/"
 repeatCSV = Rfiles + "RepeatNames.csv"
 boundCSV = Rfiles + "boundMatrix.csv"
 providedCSV = args.scoary
-talGroupsCSV = DISTALfiles + "Outputs/disTALout.TALgroups.csv"
-trfTXT = TRFfiles + "trfParsed.txt"
-orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
-kTree = KSNP3files + "kSNP3_results/tree.ML.tre"
-rvdFASTA = DISTALfiles + "rvdCombo.FASTA"
 
 #Gather FASTA files, copy to project folder for further use
 genomeNumber, FASTAlist = collectFasta(fastaPath, FASTAfiles)
@@ -134,14 +147,4 @@ subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=T
 
 #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
 if providedCSV is not None:
-    if args.scoary.lower().endswith(".csv"):
-        boundCSV = pd.read_csv(Rfiles + "boundMatrix.csv", index_col=0)
-        traitCSV = pd.read_csv(args.scoary, index_col=0)
-        boundCols = list(boundCSV.columns)
-        traitRows = list(traitCSV.index)
-        boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
-        if boundTraitCompare is 0:
-            subprocess.Popen(["scoary", "-t", providedCSV, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
-            IK3.ksnpParse(SCOARYfiles, RFiles, providedCSV, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, PROKKAfiles + "FAAs/")
-        else:
-            print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
+    scoaryToSecondR(providedCSV)
