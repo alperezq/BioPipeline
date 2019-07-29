@@ -72,6 +72,7 @@ def collectFasta(src, dst):
 
 #Function used via Pool Map to process .fa files through TRF
 def tandemRepeatFinder(tanFile):
+    subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
 
 #Function for initializing scoary and second round of R modifications
 def scoaryToSecondR(scorFile):
@@ -83,7 +84,7 @@ def scoaryToSecondR(scorFile):
         boundTraitCompare = len(list(set(boundCols) - set(traitRows)))
         if boundTraitCompare is 0:
             subprocess.Popen(["scoary", "-t", providedCSV, "-g", Rfiles + "boundMatrix.csv", "-s", "2", "-o", SCOARYfiles], close_fds=True).communicate()[0]
-            IK3.ksnpParse(SCOARYfiles, RFiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, PROKKAfiles + "FAAs/")
+            IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
         else:
             print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
 
