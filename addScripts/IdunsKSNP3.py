@@ -26,25 +26,32 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
             if re.match(r'The optimum value of K is (.*)\.', line):
                 tempInt = re.findall(r'The optimum value of K is (.*)\.', line)
                 ksnpInt = tempInt[0]
-    subprocess.Popen(["kSNP3", "-in", ksnpGenomes, "-k", str(ksnpInt), "-outdir", ksnpPath + "kSNP3_results", "-ML", "-CPU", str(ksnpCpus)], close_fds=True).communicate()[0]
-    shutil.move("fasta_list", ksnpPath + "fasta_list")
+                subprocess.Popen(["kSNP3", "-in", ksnpGenomes, "-k", str(ksnpInt), "-outdir", ksnpPath + "kSNP3_results", "-ML", "-CPU", str(ksnpCpus)], close_fds=True).communicate()[0]
+                shutil.move("fasta_list", ksnpPath + "fasta_list")
+            else:
+                print("Unable to find optimum value of K")
 
 
 #Function for routing needed data to R for parsing of various data sets
-def ksnpParse(scoaryDir, rDir, providedCSV, disDir, trfDir, orthoDir, kDir, resultsDir, rvdDir, faaDir):
-    for file in os.listdir(scoaryDir):
+def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, faaDir):
+    for file in os.listdir(SCOARYfiles):
         if file.endswith(".csv"):
-            scoaryCSV = scoaryDir +file
-    repeatsCSV = rDir + "RepeatNames.csv"
-    boundFile = rDir + "boundMatrix.csv"
-    distalGroups = disDir + "Outputs/disTALOut.TALgroups.csv"
-    parsedTRF = trfDir + "trfParsed.txt"
-    orthogroupsTXT = orthoDir + "Orthogroups.txt"
-    treeFile = kDir + "kSNP3_results/tree.ML.tre"
-    comboFile = disDir + "rvdCombo.FASTA"
-    concatenated = concatNuc(rvdDir, resultsDir)
-    faaFile = concatFaa(faaDir, resultsDir)
-    subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, providedCSV, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, resultsDir, concatenated, faaFile], close_fds=True).communicate()[0]
+            scoaryCSV = (SCOARYfiles + file)
+    try:
+        scoaryCSV
+    except:
+        print("scoary CSV doesn't exist, unable to continue process")
+    else:
+        repeatsCSV = Rfiles + "RepeatNames.csv"
+        boundFile = Rfiles + "boundMatrix.csv"
+        distalGroups = DISTALfiles + "Outputs/disTALOut.TALgroups.csv"
+        parsedTRF = TRFfiles + "trfParsed.txt"
+        orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
+        treeFile = KSNP3files + "kSNP3_results/tree.ML.tre"
+        comboFile = DISTALfiles + "rvdCombo.FASTA"
+        concatenated = concatNuc(RVDfiles, RESULTSfiles)
+        faaFile = concatFaa(faaDir, RESULTSfiles)
+        subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile], close_fds=True).communicate()[0]
 
 #concatenates rvdNuc files to single CSV
 def concatNuc(rvdFiles, results):
