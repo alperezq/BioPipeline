@@ -7,21 +7,24 @@ def csvFix(Rfiles, FASTAlist):
     matCSV = pd.read_csv(Rfiles + "matTRF.csv", index_col=0)
     orthoCSV = pd.read_csv(Rfiles + "OrthoGCMatrix.csv", index_col=0)
     groupCSV = pd.read_csv(Rfiles + "distal_GroupMatrix.csv", index_col=0)
-    FASTAprefix = (i.split('.')[0] for i in FASTAlist)
+    FASTAprefix = []
+    for name in FASTAlist:
+        temp = name.split(".")
+        FASTAprefix.append(temp[0])
     matCols = list(matCSV.columns)
     orthoCols = list(orthoCSV.columns)
     groupCols = list(groupCSV.columns)
-    matCompare = (list(set(FASTAprefix) - set(matCols)))
-    orthoCompare = (list(set(FASTAprefix) - set(orthoCols)))
-    groupCompare = (list(set(FASTAprefix) - set(groupCols)))
+    matCompare = (list(set(FASTAprefix).difference(matCols)))
+    orthoCompare = (list(set(FASTAprefix).difference(orthoCols)))
+    groupCompare = (list(set(FASTAprefix).difference(groupCols)))
     for col in matCompare:
-        print("Missing " + col + "in matTRF.csv. Adding, setting values to 0")
+        print("Missing " + col + " in matTRF.csv. Adding, setting values to 0")
         matCSV[col] = int(0)
     for col in orthoCompare:
-        print("Missing " + col + "in OrthoGCMatrix.csv. Adding, setting values to 0")
+        print("Missing " + col + " in OrthoGCMatrix.csv. Adding, setting values to 0")
         orthoCSV[col] = int(0)
     for col in groupCompare:
-        print("Missing " + col + "in distal_GroupMatrix.csv. Adding, setting values to 0")
+        print("Missing " + col + " in distal_GroupMatrix.csv. Adding, setting values to 0")
         groupCSV[col] = int(0)
     matCSV.to_csv(Rfiles + "matTRF.csv")
     orthoCSV.to_csv(Rfiles + "OrthoGCMatrix.csv")
