@@ -60,7 +60,7 @@ def concatNuc(rvdFiles, results):
         if file.endswith(".csv"):
             nucList.append(rvdFiles + file)
     nucList.sort()
-    combined = pd.concat([pd.read_csv(file) for file in nucList])
+    combined = pd.concat([pd.read_csv(file, sep="\t") for file in nucList])
     combined.to_csv(results + "rvdNucs.csv", index=False)
     return (results + "rvdNucs.csv")
 

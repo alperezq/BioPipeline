@@ -21,12 +21,9 @@ sys.dont_write_bytecode = True
 parserPS = argparse.ArgumentParser()
 parserPS.add_argument("name", help="Name of project, must be non-existant directory")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
-parserPS.add_argument("-F","--firstHalf", dest='firstHalf', action='store_true', help="Optional argument to run pipeline through just Prokka/Ortho, RVD/DISTAL, and KSNP3")
-parserPS.add_argument("-S","--secondHalf", dest='secondHalf', action='store_true', help="Optional argument to run just Scoary/Bayes and requisite Rscripts. Requires initial run of first half of pipeline to be completed.")
-parserPS.add_argument("-fa", "--fasta", help="Full valid directory path where FASTA files are stored. Files must be text files with .FASTA extension")
-parserPS.add_argument("-s","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary will not run without this, and columns must match boundmatrix.csv that is generated")
-parserPS.set_defaults(firstHalf=False)
-parserPS.set_defaults(secondHalf=False)
+parserPS.add_argument("-P","--pipeStart", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing")
+parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated")
+parserPS.set_defaults(pipeStart=False)
 args = parserPS.parse_args()
 
 def tandemRepeatFinder(tanFile):
@@ -36,8 +33,12 @@ def tandemRepeatFinder(tanFile):
 if __name__== '__main__':
 
     #Assignment of pipe scope variables
-    firstHalf = args.firstHalf
-    secondHalf = args.secondHalf
+    pipeStart = False
+    pipeScoary = False
+    if args.scoary is not None:
+        pipeScoary = True
+    if args.pipeStart is not None:
+        pipeStart = True
 
     #Processor variable, halves if greater than 10 per project guidelines by Alvaro
     if int(args.processors) <= 10:
@@ -46,17 +47,17 @@ if __name__== '__main__':
         CPUs = (int(args.processors)//2)
     CPUs = str(CPUs)
 
-    #If neither positional argument for usage of pipeline is set, run full pipeline
-    if firstHalf is False and secondHalf is False:
-        firstHalf = True
-        secondHalf = True
+    #If neither pipeStart or pipeScoary is initiated with True, pipeline won't run
+    if pipeStart is False and pipeScoary is False:
+        print("Neither start or end of pipe initialized. Exiting...")
+        sys.exit()
 
     #Assignment of pipePath and FASTAlist, dependent on mode being run
-    if firstHalf is True:
-        if args.fasta is None:
+    if pipeStart is True:
+        if args.pipeStart is None:
             print("Must provide a directory with FASTA files when running initial section of pipeline.\nExiting...")
             sys.exit()
-        pipePath, fastaPath = IDawn.pipeStart(args.name, args.fasta)
+        pipePath, fastaPath = IDawn.pipeStart(args.name, args.pipeStart)
     else:
         pipePath, FASTAlist = IDawn.pipeDetour(args.name)
 
@@ -76,7 +77,7 @@ if __name__== '__main__':
     providedCSV = args.scoary
 
     #Gather FASTA files, copy to project folder for further use
-    if firstHalf is True:
+    if pipeStart is True:
         FASTAlist = IDawn.collectFasta(fastaPath, FASTAfiles)
 
         #Call to TandemRepeatsFinder, done individually to allow processing of large batches of Files
@@ -104,7 +105,7 @@ if __name__== '__main__':
         KSNP3Process.join()
 
     #Second section of pipeline, requires secondHalf to be True
-    if secondHalf is True:
+    if pipeScoary is True:
 
         #Call R script for further parsing of data
         subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
@@ -119,4 +120,4 @@ if __name__== '__main__':
             IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
 
             #Call BayesTraitsV3 on prior results of pipeline
-            IBridge.bayesPool(pipePath)
+            #IBridge.bayesPool(pipePath)
