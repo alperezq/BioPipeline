@@ -20,9 +20,13 @@ sys.dont_write_bytecode = True
 #Parser from argparse for command line refinement
 parserPS = argparse.ArgumentParser()
 parserPS.add_argument("name", help="Name of project, must be non-existant directory")
-parserPS.add_argument("fasta", help="Full valid directory path where FASTA files are stored. Files must be text files with .FASTA extension")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
+parserPS.add_argument("-F","--firstHalf", dest='firstHalf', action='store_true', help="Optional argument to run pipeline through just Prokka/Ortho, RVD/DISTAL, and KSNP3")
+parserPS.add_argument("-S","--secondHalf", dest='secondHalf', action='store_true', help="Optional argument to run just Scoary/Bayes and requisite Rscripts. Requires initial run of first half of pipeline to be completed.")
+parserPS.add_argument("-fa", "--fasta", help="Full valid directory path where FASTA files are stored. Files must be text files with .FASTA extension")
 parserPS.add_argument("-s","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary will not run without this, and columns must match boundmatrix.csv that is generated")
+parserPS.set_defaults(firstHalf=False)
+parserPS.set_defaults(secondHalf=False)
 args = parserPS.parse_args()
 
 def tandemRepeatFinder(tanFile):
@@ -31,6 +35,10 @@ def tandemRepeatFinder(tanFile):
 #Main section / execution of code
 if __name__== '__main__':
 
+    #Assignment of pipe scope variables
+    firstHalf = args.firstHalf
+    secondHalf = args.secondHalf
+
     #Processor variable, halves if greater than 10 per project guidelines by Alvaro
     if int(args.processors) <= 10:
         CPUs = args.processors
@@ -38,8 +46,21 @@ if __name__== '__main__':
         CPUs = (int(args.processors)//2)
     CPUs = str(CPUs)
 
+    #If neither positional argument for usage of pipeline is set, run full pipeline
+    if firstHalf is False and secondHalf is False:
+        firstHalf = True
+        secondHalf = True
+
+    #Assignment of pipePath and FASTAlist, dependent on mode being run
+    if firstHalf is True:
+        if args.fasta is None:
+            print("Must provide a directory with FASTA files when running initial section of pipeline.\nExiting...")
+            sys.exit()
+        pipePath, fastaPath = IDawn.pipeStart(args.name, args.fasta)
+    else:
+        pipePath, FASTAlist = IDawn.pipeDetour(args.name)
+
     #Initiate path variables and file location variables (created after start of main section)
-    pipePath, fastaPath = IDawn.pipeStart(args.name, args.fasta)
     FASTAfiles = pipePath + "FASTAfiles/"
     TRFfiles = pipePath + "TRFfiles/"
     PROKKAfiles = pipePath + "PROKKAfiles/"
@@ -49,44 +70,53 @@ if __name__== '__main__':
     Rfiles = pipePath + "Rfiles/"
     KSNP3files = pipePath + "KSNP3files/"
     SCOARYfiles = pipePath + "SCOARYfiles/"
+    BAYESfiles = pipePath + "BAYESfiles/"
     RESULTSfiles = pipePath + "Results/"
     LOGfiles = pipePath + "Logging/"
     providedCSV = args.scoary
 
     #Gather FASTA files, copy to project folder for further use
-    genomeNumber, FASTAlist = IDawn.collectFasta(fastaPath, FASTAfiles)
+    if firstHalf is True:
+        FASTAlist = IDawn.collectFasta(fastaPath, FASTAfiles)
 
-    #Call to TandemRepeatsFinder, done individually to allow processing of large batches of Files
-    workerPool = mp.Pool(processes=int(CPUs),)
-    workerPool.map(tandemRepeatFinder, FASTAlist)
-    workerPool.close()
-    workerPool.join()
+        #Call to TandemRepeatsFinder, done individually to allow processing of large batches of Files
+        workerPool = mp.Pool(processes=int(CPUs),)
+        workerPool.map(tandemRepeatFinder, FASTAlist)
+        workerPool.close()
+        workerPool.join()
 
-    #Parsing of TRF files
-    IPO.trfParse(TRFfiles, FASTAlist)
+        #Parsing of TRF files
+        IPO.trfParse(TRFfiles, FASTAlist)
 
-    #Establish first set of processes for the pipeline and pass their relevant parameters
-    prokkaProcess = mp.Process(target = IPO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
-    RVDProcess = mp.Process(target = IRD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-    KSNP3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
+        #Establish first set of processes for the pipeline and pass their relevant parameters
+        prokkaProcess = mp.Process(target = IPO.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
+        RVDProcess = mp.Process(target = IRD.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
+        KSNP3Process = mp.Process(target = IK3.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
 
-    #Start processes
-    prokkaProcess.start()
-    RVDProcess.start()
-    KSNP3Process.start()
+        #Start processes
+        prokkaProcess.start()
+        RVDProcess.start()
+        KSNP3Process.start()
 
-    #Rejoin processes with main thread, won't continue till each finishes
-    prokkaProcess.join()
-    RVDProcess.join()
-    KSNP3Process.join()
+        #Rejoin processes with main thread, won't continue till each finishes
+        prokkaProcess.join()
+        RVDProcess.join()
+        KSNP3Process.join()
 
-    #Call R script for further parsing of data
-    subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
-    IBridge.csvFix(Rfiles, FASTAlist)
-    subprocess.Popen(["Rscript", "addScripts/IdunsRBridge.R", pipePath], close_fds=True).communicate()[0]
+    #Second section of pipeline, requires secondHalf to be True
+    if secondHalf is True:
 
-    #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
-    if providedCSV is not None:
-        scorFile = IBridge.scoary(pipePath, providedCSV)
-        subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
-        IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
+        #Call R script for further parsing of data
+        subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
+        IBridge.csvFix(Rfiles, FASTAlist)
+        subprocess.Popen(["Rscript", "addScripts/IdunsRBridge.R", pipePath], close_fds=True).communicate()[0]
+
+        #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
+        if providedCSV is not None:
+            scorFile = IBridge.scoary(pipePath, providedCSV)
+            subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
+            subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
+            IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
+
+            #Call BayesTraitsV3 on prior results of pipeline
+            IBridge.bayesPool(pipePath)

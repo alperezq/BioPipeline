@@ -31,6 +31,7 @@ def pipeStart(name, filePath):
             os.mkdir(fullPath + "Rfiles")
             os.mkdir(fullPath + "KSNP3files")
             os.mkdir(fullPath + "SCOARYfiles")
+            os.mkdir(fullPath + "BAYESfiles")
             os.mkdir(fullPath + "Results")
             os.mkdir(fullPath + "Logging")
         except OSError:
@@ -40,6 +41,17 @@ def pipeStart(name, filePath):
             print("Succesfully created the directory")
     return fullPath, filePath;
 
+def pipeDetour(name):
+    if not name.endswith("/"):
+        name = name + "/"
+    fileExt = [".fa", ".fasta", ".fas", "fna"]
+    fileList = []
+    for file in os.listdir(name + "FASTAfiles/"):
+        if file.lower().endswith(tuple(fileExt)):
+            fileList.append(file)
+    return name, fileList;
+
+
 #Checks FASTA path for .FASTA txt files, creates new directory in project directory with copies of files
 def collectFasta(src, dst):
     numberOfFiles = 0
@@ -47,7 +59,6 @@ def collectFasta(src, dst):
     fileList = []
     for file in os.listdir(src):
         if file.lower().endswith(tuple(fileExt)):
-            numberOfFiles+=1
             fileList.append(file)
             shutil.copyfile(src + file, dst + file)
-    return numberOfFiles, fileList;
+    return fileList;
