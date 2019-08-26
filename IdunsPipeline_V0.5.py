@@ -19,13 +19,14 @@ sys.dont_write_bytecode = True
 
 #Parser from argparse for command line refinement
 parserPS = argparse.ArgumentParser()
-parserPS.add_argument("name", help="Name of project, must be non-existant directory")
+parserPS.add_argument("name", help="Name of project. Must be non-existant directory if running first half of pipeline. If just running the second half, must use project directory created by / in same format as Idun's Pipeline")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
 parserPS.add_argument("-P","--pipeStart", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing")
 parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated")
-parserPS.set_defaults(pipeStart=False)
 args = parserPS.parse_args()
 
+print(args.scoary)
+print(args.pipeStart)
 def tandemRepeatFinder(tanFile):
     subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
 
@@ -114,10 +115,10 @@ if __name__== '__main__':
 
         #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
         if providedCSV is not None:
-            scorFile = IBridge.scoary(pipePath, providedCSV)
-            subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
-            subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
-            IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
+            #scorFile = IBridge.scoary(pipePath, providedCSV)
+            #subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
+            #subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
+            #IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
 
             #Call BayesTraitsV3 on prior results of pipeline
-            #IBridge.bayesPool(pipePath)
+            IBridge.bayesPool(pipePath)
