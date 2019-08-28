@@ -9,19 +9,19 @@ sys.dont_write_bytecode = True
 
 
 #Run FASTA files through prokka, parse FAA'srun results through Ortho, move results as needed (Needs citation)
-def prokka(ProkkaFiles, ProkkaSrc, ProkkaDst, ortho, ProkkaOrthoCpus):
-    for file in ProkkaFiles:
+def prokka(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs):
+    for file in FASTAlist:
         ProkkaPrefix = file.split(".")
-        subprocess.Popen(["prokka", "--outdir", ProkkaDst + file, "--compliant", "--prefix", ProkkaPrefix[0], "--force", "--genus", "Xanthomonus", "--species", "Oryzae", "--strain", ProkkaPrefix[0], "--cpus", ProkkaOrthoCpus, "--rfam", ProkkaSrc + file], close_fds=True).communicate()[0]
-        for item in os.listdir(ProkkaDst + file + "/"):
+        subprocess.Popen(["prokka", "--outdir", PROKKAfiles + file, "--compliant", "--prefix", ProkkaPrefix[0], "--force", "--genus", "Xanthomonus", "--species", "Oryzae", "--strain", ProkkaPrefix[0], "--cpus", CPUs, "--rfam", FASTAfiles + file], close_fds=True).communicate()[0]
+        for item in os.listdir(PROKKAfiles + file + "/"):
             if item.endswith(".faa"):
-                shutil.copyfile(ProkkaDst + file + "/" + item, ProkkaDst + "FAAs/" + item)
-    os.system("grep '>' " + ProkkaDst + "FAAs/*.faa | cut -d ' ' -f2- | sort | uniq -c > " + ProkkaDst + "parsedProkka.txt")
-    subprocess.Popen(["orthofinder", "-f", ProkkaDst + "FAAs/", "-t", ProkkaOrthoCpus], close_fds=True).communicate()[0]
-    for dir in os.listdir(ProkkaDst + "FAAs/"):
+                shutil.copyfile(PROKKAfiles + file + "/" + item, PROKKAfiles + "FAAs/" + item)
+    os.system("grep '>' " + PROKKAfiles + "FAAs/*.faa | cut -d ' ' -f2- | sort | uniq -c > " + PROKKAfiles + "parsedProkka.txt")
+    subprocess.Popen(["orthofinder", "-f", PROKKAfiles + "FAAs/", "-t", CPUs], close_fds=True).communicate()[0]
+    for dir in os.listdir(PROKKAfiles + "FAAs/"):
         if "Results" in dir:
-            for item in os.listdir(ProkkaDst + "FAAs/" + dir):
-                shutil.move(ProkkaDst + "FAAs/" + dir + "/" + item, ortho + item)
+            for item in os.listdir(PROKKAfiles + "FAAs/" + dir):
+                shutil.move(PROKKAfiles + "FAAs/" + dir + "/" + item, ORTHOfiles + item)
 
 
 #Parsing of TRF files to single text file
@@ -40,3 +40,21 @@ def trfParse(trfSrc, fileList):
                             entries = line.split()
                             entry = (prefixTRF + " " + entries[0] + " " + entries[1] + " " + entries[2] + " " + entries[3] + " " + entries[4] + " " + entries[13] + " " + entries[14] + "\n")
                             outFile.write(entry)
+
+
+#Creates concatenated FAA file, adding file names to start of appropriate lines
+def concatFaa(faaDir, RESULTSfiles):
+    faaList = [file for file in os.listdir(faaDir) if file.lower().endswith(".faa")]
+    faaList.sort()
+    for file in faaList:
+        prefix = file.split(".")
+        with open(faaDir + file, 'r') as item:
+            data = item.read()
+        data = data.replace('>', '>' + prefix[0] + ' ')
+        with open(faaDir + file, 'w') as item:
+            item.write(data)
+    with open(RESULTSfiles + "faaConcatenated.faa", 'wb') as outFile:
+        for file in faaList:
+            with open(faaDir + file, 'rb') as inFile:
+                shutil.copyfileobj(inFile, outFile)
+    return(RESULTSfiles + "faaConcatenated.faa")

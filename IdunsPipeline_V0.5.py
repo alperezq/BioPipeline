@@ -105,6 +105,10 @@ if __name__== '__main__':
         RVDProcess.join()
         KSNP3Process.join()
 
+        #Creation of faaConcatenated and rvdNucs files for end Results
+        IPO.concatFaa(PROKKAfiles + "FAAs/", RESULTSfiles)
+        IRD.concatNuc(RVDfiles, RESULTSfiles)
+
     #Second section of pipeline, requires secondHalf to be True
     if pipeScoary is True:
 
@@ -115,10 +119,10 @@ if __name__== '__main__':
 
         #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
         if providedCSV is not None:
-            #scorFile = IBridge.scoary(pipePath, providedCSV)
-            #subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
-            #subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
-            #IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
+            scorFile = IBridge.scoary(pipePath, providedCSV)
+            subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
+            subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
+            IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
 
             #Call BayesTraitsV3 on prior results of pipeline
             IBridge.bayesPool(pipePath)

@@ -49,6 +49,8 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
         treeFile = KSNP3files + "kSNP3_results/tree.ML.tre"
         comboFile = DISTALfiles + "rvdCombo.FASTA"
+        if os.path.isfile(RESULTSfiles + "faaConcatenated.faa"):
+            os.remove(RESULTSfiles + "faaConcatenated.faa")
         concatenated = concatNuc(RVDfiles, RESULTSfiles)
         faaFile = concatFaa(faaDir, RESULTSfiles)
         subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile], close_fds=True).communicate()[0]

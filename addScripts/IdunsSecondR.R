@@ -18,10 +18,10 @@ talGroupsCSV = read.csv(args[5], stringsAsFactors = FALSE)
 trfTXT = read.delim(args[6],sep = " ",header = FALSE)
 orthogroupsTXT = read.delim(args[7],sep=" ",header = FALSE)
 kTree = read.tree(args[8])
-rvdFASTA = read.FASTA(args[9])
+rvdFASTA = read.FASTA(args[9],type="AA")
 resultDIR = args[10]
 conCSV = read.csv(args[11])
-faaFASTA = read.FASTA(args[12])
+faaFASTA = read.FASTA(args[12],type="AA")
 
 
 #Functions for creation of datasets

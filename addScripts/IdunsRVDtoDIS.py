@@ -21,3 +21,14 @@ def RVDminer(RVDFiles, RVDsrc, RVDdst, DISdst):
     comboFile = DISdst + "rvdCombo.FASTA"
     subprocess.Popen(["perl", "DisTAL_v1.3_Groups.pl", "-m", "T", comboFile, "disTALOut", "4.5"], close_fds=True).communicate()[0]
     shutil.move(os.getcwd() + "/" "Outputs", DISdst + "Outputs")
+
+#concatenates rvdNuc files to single CSV
+def concatNuc(RVDfiles, RESULTSfiles):
+    nucList = []
+    for file in os.listdir(RVDfiles):
+        if file.endswith(".csv"):
+            nucList.append(RVDfiles + file)
+    nucList.sort()
+    combined = pd.concat([pd.read_csv(file, sep="\t") for file in nucList])
+    combined.to_csv(RESULTSfiles + "rvdNucs.csv", index=False)
+    return (RESULTSfiles + "rvdNucs.csv")
