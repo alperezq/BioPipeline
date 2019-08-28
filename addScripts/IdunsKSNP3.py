@@ -51,34 +51,6 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         comboFile = DISTALfiles + "rvdCombo.FASTA"
         if os.path.isfile(RESULTSfiles + "faaConcatenated.faa"):
             os.remove(RESULTSfiles + "faaConcatenated.faa")
-        concatenated = concatNuc(RVDfiles, RESULTSfiles)
-        faaFile = concatFaa(faaDir, RESULTSfiles)
+        concatenated = (RESULTSfiles + "rvdNucs.csv")
+        faaFile = (RESULTSfiles + "faaConcatenated.faa")
         subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile], close_fds=True).communicate()[0]
-
-#concatenates rvdNuc files to single CSV
-def concatNuc(rvdFiles, results):
-    nucList = []
-    for file in os.listdir(rvdFiles):
-        if file.endswith(".csv"):
-            nucList.append(rvdFiles + file)
-    nucList.sort()
-    combined = pd.concat([pd.read_csv(file, sep="\t") for file in nucList])
-    combined.to_csv(results + "rvdNucs.csv", index=False)
-    return (results + "rvdNucs.csv")
-
-#Creates concatenated FAA file, adding file names to start of appropriate lines
-def concatFaa(faaDir, results):
-    faaList = [file for file in os.listdir(faaDir) if file.lower().endswith(".faa")]
-    faaList.sort()
-    for file in faaList:
-        prefix = file.split(".")
-        with open(faaDir + file, 'r') as item:
-            data = item.read()
-        data = data.replace('>', '>' + prefix[0] + ' ')
-        with open(faaDir + file, 'w') as item:
-            item.write(data)
-    with open(results + "faaConcatenated.faa", 'wb') as outFile:
-        for file in faaList:
-            with open(faaDir + file, 'rb') as inFile:
-                shutil.copyfileobj(inFile, outFile)
-    return(results + "faaConcatenated.faa")
