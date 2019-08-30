@@ -3,6 +3,7 @@ import subprocess
 import sys
 import shutil
 import os
+import pandas as pd
 
 
 sys.dont_write_bytecode = True
