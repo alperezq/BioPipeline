@@ -41,6 +41,7 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         scoaryCSV
     except:
         print("scoary CSV doesn't exist, unable to continue process")
+        sys.exit()
     else:
         repeatsCSV = Rfiles + "RepeatNames.csv"
         boundFile = Rfiles + "boundMatrix.csv"
@@ -49,8 +50,6 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
         treeFile = KSNP3files + "kSNP3_results/tree.ML.tre"
         comboFile = DISTALfiles + "rvdCombo.FASTA"
-        if os.path.isfile(RESULTSfiles + "faaConcatenated.faa"):
-            os.remove(RESULTSfiles + "faaConcatenated.faa")
         concatenated = (RESULTSfiles + "rvdNucs.csv")
         faaFile = (RESULTSfiles + "faaConcatenated.faa")
         subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile], close_fds=True).communicate()[0]

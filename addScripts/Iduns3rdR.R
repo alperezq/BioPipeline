@@ -20,7 +20,7 @@ write.nexus(Ktree,file=(paste(projectPath, "BAYESfiles/Ktree.nexus",sep="")),tra
 BMAT <- read.csv(paste(projectPath, "Rfiles/boundMatrix.csv", sep="")) # matrix containing gene counts obtained with orthofinder
 colnames(BMAT)<- gsub("\\.","-",colnames(BMAT))
 
-SPEC <- read.csv(paste(projectPath, "Rfiles/providedCSV.csv", sep=""))
+SPEC <- read.csv(paste(projectPath, "SCOARYfiles/providedCSV.csv", sep=""))
 colnames(SPEC)[1]<-"ID"
 
 BMAT <- cbind("ID"=BMAT[,1],BMAT[,colnames(BMAT) %in% SPEC[,1]]) # verifies that the names in bound matrix are in the trait file

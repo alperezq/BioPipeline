@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3.7
 #Bioinformatics Pipeline
 from addScripts import IdunsDawn as IDawn
 from addScripts import IdunsProkkaOrtho as IPO
@@ -25,8 +25,6 @@ parserPS.add_argument("-P","--pipeStart", nargs="?", help="Optional argument to 
 parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated")
 args = parserPS.parse_args()
 
-print(args.scoary)
-print(args.pipeStart)
 def tandemRepeatFinder(tanFile):
     subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
 
@@ -125,4 +123,4 @@ if __name__== '__main__':
             IK3.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
 
             #Call BayesTraitsV3 on prior results of pipeline
-            IBridge.bayesPool(pipePath)
+            #IBridge.bayesPool(pipePath)

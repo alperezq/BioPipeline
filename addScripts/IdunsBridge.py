@@ -37,8 +37,8 @@ def csvFix(Rfiles, FASTAlist):
 
 #Function for initializing scoary and second round of R modifications
 def scoary(pipePath, providedCSV):
-    shutil.copyfile(providedCSV, pipePath + "Rfiles/providedCSV.csv")
-    scorFile = (pipePath + "Rfiles/providedCSV.csv")
+    shutil.copyfile(providedCSV, pipePath + "SCOARYfiles/providedCSV.csv")
+    scorFile = (pipePath + "SCOARYfiles/providedCSV.csv")
     if scorFile.lower().endswith(".csv"):
         boundCSV = pd.read_csv(pipePath + "Rfiles/boundMatrix.csv", index_col=0)
         traitCSV = pd.read_csv(scorFile, index_col=0)
@@ -73,12 +73,12 @@ def bayesCall(iterableColumns, path):
     df = bayesData[[iterableColumns]].join(traitData)
     dfName = (path + "BAYESfiles/" + iterableColumns + "_mat.txt")
     df.to_csv(dfName, header=False, sep= "\t")
-    depCom=("3\n2\nPriorAll exp 10\nStones 100 500\nCor 1\nRun\n")
-    indCom=("2\n2\nPriorAll exp 10\nStones 100 500\nCor 1\nRun\n")
     depProc = subprocess.Popen(["BayesTraitsV3", nexus, dfName], stdin=subprocess.PIPE, text=True)
+    depCom=("3\n2\nPriorAll exp 10\nStones 100 500\nCor 1\nRun\n")
     depProc.stdin.write(depCom)
     os.rename(dfName + ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".dependant")
     indProc = subprocess.Popen(["BayesTraitsV3", nexus, dfName], stdin=subprocess.PIPE, text=True)
+    indCom=("2\n2\nPriorAll exp 10\nStones 100 500\nCor 1\nRun\n")
     indProc.stdin.write(indCom)
     os.rename(dfName+ ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".independant")
     with open(path + "BAYESfiles/" + iterableColumns + ".dependant", 'r') as depFile:
