@@ -35,7 +35,7 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
 #Function for routing needed data to R for parsing of various data sets
 def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, faaDir):
     for file in os.listdir(SCOARYfiles):
-        if file.endswith(".csv"):
+        if file.endswith("results.csv"):
             scoaryCSV = (SCOARYfiles + file)
     try:
         scoaryCSV

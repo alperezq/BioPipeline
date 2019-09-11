@@ -69,17 +69,27 @@ def bayesPool(pipePath):
 def bayesCall(iterableColumns, path):
     nexus = (path + "BAYESfiles/Ktree.nexus")
     bayesData = pd.read_csv(path + "BAYESfiles/BayesGenerator.csv", index_col=0)
-    traitData = pd.read_csv(path + "Rfiles/providedCSV.csv", index_col=0)
+    traitData = pd.read_csv(path + "SCOARYfiles/providedCSV.csv", index_col=0)
     df = bayesData[[iterableColumns]].join(traitData)
     dfName = (path + "BAYESfiles/" + iterableColumns + "_mat.txt")
     df.to_csv(dfName, header=False, sep= "\t")
+
+    #Subprocess call for dependent Bayes
     depProc = subprocess.Popen(["BayesTraitsV3", nexus, dfName], stdin=subprocess.PIPE, text=True)
     depCom=("3\n2\nPriorAll exp 10\nStones 100 500\nCor 1\nRun\n")
     depProc.stdin.write(depCom)
+    depProc.stdin.flush()
+    depProc.communicate()[0]
+
     os.rename(dfName + ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".dependant")
+
+    #Subprocess call for independent Bayes
     indProc = subprocess.Popen(["BayesTraitsV3", nexus, dfName], stdin=subprocess.PIPE, text=True)
     indCom=("2\n2\nPriorAll exp 10\nStones 100 500\nCor 1\nRun\n")
     indProc.stdin.write(indCom)
+    indProc.stdin.flush()
+    indProc.communicate()[0]
+
     os.rename(dfName+ ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".independant")
     with open(path + "BAYESfiles/" + iterableColumns + ".dependant", 'r') as depFile:
         content = depFile.readlines()
