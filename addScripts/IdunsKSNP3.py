@@ -52,4 +52,5 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         comboFile = DISTALfiles + "rvdCombo.FASTA"
         concatenated = (RESULTSfiles + "rvdNucs.csv")
         faaFile = (RESULTSfiles + "faaConcatenated.faa")
-        subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile], close_fds=True).communicate()[0]
+        rvdNucs = (RESULTSfiles + "rvdNucs.csv")
+        subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile, rvdNucs], close_fds=True).communicate()[0]

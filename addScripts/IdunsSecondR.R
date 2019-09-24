@@ -22,6 +22,7 @@ rvdFASTA = read.FASTA(args[9],type="AA")
 resultDIR = args[10]
 conCSV = read.csv(args[11])
 faaFASTA = read.FASTA(args[12],type="AA")
+rvdNucs = read.csv(args[13])
 
 
 #Functions for creation of datasets
@@ -51,6 +52,15 @@ rvd_ids_file <- function()
       write.FASTA(rvdFASTA,paste(resultDIR, "rvdIds.FASTA", sep=""))
     }else{print("rvdFASTA in rvd_ids_file function lacking data, unable to create file")}
   }else{print("rvdFASTA lacking data, unable to create file")}
+}
+
+rvd_nucs_file <- function()
+{
+  if(object.size(rvdNucs) > 0)
+  {
+    newRvd <- rvdNucs[rvdNucs$ID %in% talIDS,]
+    write.csv(newRvd,paste(resultDIR, "rvdIDs.csv"))
+  }else{print("rvdNucs lacking data, unable to modify file")}
 }
 
 ortho_melt <- function()
@@ -85,6 +95,7 @@ if(nrow(scoaryCSV) > 0)
   ids <- scoaryCSV[scoaryCSV$Bonferroni_p<0.05,1]
   rep_trf_file()
   ortho_melt()
+  rvd_nucs_file()
   if(nrow(talGroupsCSV) > 0)
   {
     talIDS <- talGroupsCSV$TAL[paste("TALGroup_",talGroupsCSV$Group,sep="") %in% ids]

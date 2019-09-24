@@ -58,7 +58,7 @@ def scoary(pipePath, providedCSV):
 def bayesPool(pipePath):
     bayesData = pd.read_csv(pipePath + "BAYESfiles/BayesGenerator.csv", index_col=0)
     with open(pipePath + "Results/bayesResults.txt", 'w') as bayesOut:
-        bayesOut.writelines("Gene\tDependent\tIndependent\n")
+        bayesOut.writelines("Gene\tDependent\tIndependent\t2*(dep-ind)\n")
     bayesList = (bayesData.columns)
     pool = mp.Pool(processes=10,)
     pool.starmap(bayesCall, zip(bayesList, repeat(pipePath)))
@@ -81,7 +81,17 @@ def bayesCall(iterableColumns, path):
     depProc.stdin.flush()
     depProc.communicate()[0]
 
-    os.rename(dfName + ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".dependant")
+    if(os.path.isfile(dfName + ".Stones.txt")):
+        os.rename(dfName + ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".dependant")
+        with open(path + "BAYESfiles/" + iterableColumns + ".dependant", 'r') as depFile:
+            content = depFile.readlines()
+            for line in content:
+                if "Log marginal likelihood" in line:
+                    temp = line.split()
+                    tempDep = temp[3]
+    else:
+        tempDep = 'NA'
+
 
     #Subprocess call for independent Bayes
     indProc = subprocess.Popen(["BayesTraitsV3", nexus, dfName], stdin=subprocess.PIPE, text=True)
@@ -90,35 +100,40 @@ def bayesCall(iterableColumns, path):
     indProc.stdin.flush()
     indProc.communicate()[0]
 
-    os.rename(dfName+ ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".independant")
-    with open(path + "BAYESfiles/" + iterableColumns + ".dependant", 'r') as depFile:
-        content = depFile.readlines()
-        for line in content:
-            if "Log marginal likelihood" in line:
-                temp = line.split()
-                tempDep = temp[3]
-    with open(path + "BAYESfiles/" + iterableColumns + ".independant", 'r') as indepFile:
-        content = indepFile.readlines()
-        for line in content:
-            if "Log marginal likelihood" in line:
-                temp = line.split()
-                tempInd = temp[3]
+    if(os.path.isfile(dfName + ".Stones.txt")):
+        os.rename(dfName+ ".Stones.txt", path + "BAYESfiles/" + iterableColumns + ".independant")
+        with open(path + "BAYESfiles/" + iterableColumns + ".independant", 'r') as indepFile:
+            content = indepFile.readlines()
+            for line in content:
+                if "Log marginal likelihood" in line:
+                    temp = line.split()
+                    tempInd = temp[3]
+    else:
+        tempInd = "NA"
+
+    #Check variables for dep and ind
     try:
         tempDep
     except NameError:
         print("Missing value for " + iterableColumns + " in dependant file.")
-        dependantVal = ' '
+        dependantVal = 'NA'
     else:
         dependantVal = tempDep
     try:
         tempInd
     except NameError:
         print("Missing value for " + iterableColumns + " in independant file.")
-        independantVal = ' '
+        independantVal = 'NA'
     else:
         independantVal = tempInd
+
+    #Get combo value, 2*(dependant - independant)
+    if(dependantVal != "NA" && independantVal != 'NA'):
+        finalVal = 2*((float)dependantVal - (floatd)independantVal)
+        
+    #Write variables to results file
     with open(path + "Results/bayesResults.txt", 'a') as bayesOut:
-        bayesOut.writelines(iterableColumns + "\t" + dependantVal + "\t" + independantVal + "\n")
+        bayesOut.writelines(iterableColumns + "\t" + dependantVal + "\t" + independantVal + "\t" + finalVal + "\n")
     for item in os.listdir(path + "BAYESfiles/"):
         if iterableColumns in item:
             os.remove(path + "BAYESfiles/" + item)
