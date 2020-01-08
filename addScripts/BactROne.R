@@ -16,86 +16,83 @@ library(argparse)
 args <- commandArgs(trailingOnly = TRUE)
 projectPath = args[1]
 
-#Establish paths based on project presets,
-orthoPath = paste(projectPath, "ORTHOfiles/", sep = "")
-RPath = paste(projectPath, "Rfiles/", sep = "")
-TRFPath = paste(projectPath, "TRFfiles/", sep = "")
-DisTALPath = paste(projectPath, "DISTALfiles/", sep = "")
-
 #Assign data files to variables
-orthoGC <- read.delim(paste(orthoPath,"Orthogroups.GeneCount.csv", sep=""))
-repeatsTRF <- read.delim(paste(TRFPath,"trfParsed.txt", sep = ""), header = FALSE, sep = " ")
-disOut <- as.matrix(read.table(paste(DisTALPath, "Outputs/disTALOut.mat", sep = ""), header=TRUE, sep = "\t",row.names = 1, as.is=TRUE))
-statsPerSpecies <- read.delim(paste(orthoPath,"Statistics_PerSpecies.csv", sep=""))
-Groups <- read.csv(paste(DisTALPath, "Outputs/disTALOut.TALgroups.csv", sep =""))
-
+orthoGCFile <- paste(projectPath,"ORTHOfiles/Orthogroups.GeneCount.csv", sep="")
+repeatsTRFFile <- paste(projectPath, "TRFfiles/trfParsed.txt", sep = "")
+statsPerSpeciesFile <- paste(projectPath,"ORTHOfiles/Statistics_PerSpecies.csv", sep = "")
+GroupsFile <- paste(projectPath, "DISTALfiles/Outputs/disTALOut.TALgroups.csv", sep ="")
 
 #Manipulation of orthoGC to Matrix
-orthoGCMatrix <- as.matrix(orthoGC[,2:(ncol(orthoGC)-1)], rownames.force = 0, nrow(5), ncol(5))
-orthoGCMatrix[orthoGCMatrix>1]<-1
-Z1Orth <- orthoGC[,1:(ncol(orthoGC)-1)]
-Z1Orth[,2:ncol(Z1Orth)] <-apply(Z1Orth[,2:ncol(Z1Orth)], 2, function(x) ifelse(x > 1, 1, x))
+OrthoGC <- function()
+{
+  if(file.exists(orthoGCFile)){
+    orthoGC <- read.delim(orthoGCFile)
+    if(object.size(orthoGC) > 0)
+    {
+      orthoGCMatrix <- as.matrix(orthoGC[,1:(ncol(orthoGC)-1)], rownames.force = 0, nrow(5), ncol(5))
+      colnames(orthoGCMatrix) <- gsub(pattern = "\\.", "-", x = colnames(orthoGCMatrix))
+      colnames(orthoGCMatrix)[colnames(orthoGCMatrix)=="X"] <- "V1"
+      write.csv(orthoGCMatrix, paste(RPath, "OrthoGCMatrix.csv", sep=""), row.names = FALSE)
+    }else{print("Orthogroups.GeneCount.csv was generated, but has no data")}
+  }else{print("Orthogroups.GeneCount.csv was not generated.")}
+}
 
-#statsPerSpecies manipulations and creation
-statsPerc <- statsPerSpecies[statsPerSpecies$X == "Percentage of genes in species-specific orthogroups",]
-statsPerc <- as.data.frame(t(statsPerc))
-write.csv(statsPerc, paste(RPath, "statsPerSpeciesR.csv", sep = ""),  row.names = TRUE)
+#Manipulation of statsPerSpecies
+perSpeciesStats <- function()
+{
+  if(file.exists(statsPerSpeciesFile)){
+    statsPerSpecies <- read.delim(statsPerSpeciesFile)
+    if(object.size(statsPerSpecies) > 0){
+      statsPerc <- statsPerSpecies[statsPerSpecies$X == "Percentage of genes in species-specific orthogroups",]
+      statsPerc <- as.data.frame(t(statsPerc))
+      write.csv(statsPerc, paste(RPath, "statsPerSpeciesR.csv", sep = ""),  row.names = TRUE)
+    }else{
+      print("Statistics_PerSpecies.csv was generated, but has no data.")
+    }
+  }else{print('Statistics_PerSpecies.csv was not generated')}
+}
 
-#Creation of various plots using OrthoGC data
-pdf(paste(RPath, "orthoGCggplot.pdf", sep = ""))
-ggplot(data=orthoGC,aes(x=AUST2013, y=JW11089)) + geom_point(size=1, shape=6)
-dev.off()
-pdf(paste(RPath, "orthoGCgg&geom.pdf", sep = ""))
-ggplot(data=orthoGC,aes(x=AUST2013, y=JW11089)) + geom_point()
-dev.off()
-pdf(paste(RPath,"orthoGCMatrixHeatmap.pdf", sep = ""))
-Heatmap(orthoGCMatrix, row_order = sort(rownames(orthoGCMatrix)),)
-dev.off()
-pdf(paste(RPath,"orthoGCPheatmap.pdf", sep = ""))
-pheatmap(orthoGC[,2:(ncol(orthoGC)-1)])
-dev.off()
-pdf(paste(RPath, "orthoGCPheatmap.pdf", sep = ""))
-pheatmap(orthoGC[,2:(ncol(orthoGC)-1)])
-dev.off()
-pdf(paste(RPath, "orthoGCBoxplot.pdf", sep = ""))
-boxplot(orthoGC[,2:(ncol(orthoGC)-1)])
-dev.off()
-pdf(paste(RPath, "Z10rthPheatmap.pdf", sep = ""))
-pheatmap(Z1Orth[,2:ncol(Z1Orth)])
-dev.off()
+#Manipulation of trf -> matTRf and repeatNames
+TandemRepeatFinder <- function()
+{
+  if(file.exists(repeatsTRFFile)){
+    repeatsTRF <- read.delim(repeatsTRFFile, header = FALSE, sep = "")
+    if(object.size(repeatsTRF) > 0){
+      aggTRF<-repeatsTRF[,c(1,5,7)]
+      repSumsTRF<-as.data.frame(aggregate(aggTRF$V5 ~ aggTRF$V7 + aggTRF$V1, FUN= sum))
+      colnames(repSumsTRF)<-c("V1","V2","V3")
+      matTRF<-dcast(repSumsTRF, V1 ~ V2, value.var = "V3")
+      matTRF[is.na(matTRF)]<-0
 
+      RepNames<-data.frame("Sequence"=matTRF$V1)
+      RepNames$Name<-paste("Repeats",1:nrow(RepNames),sep="_")
+      matTRF$V1<-RepNames$Name
+      colnames(matTRF) <- gsub(pattern = "\\.", "-", x = colnames(matTRF))
+      write.csv(matTRF, paste(RPath, "matTRF.csv", sep = ""), row.names = FALSE)
+      write.csv(RepNames, paste(RPath, "RepeatNames.csv", sep = ""), row.names = FALSE)
+    }else{print("trfParsed.txt was generated, but has no data.")}
+  }else{print("trfParsed.txt as not generated")}
+}
 
-#TandemRepeatFinder data manipulations
-aggTRF<-repeatsTRF[,c(1,5,7)]
-repSumsTRF<-as.data.frame(aggregate(aggTRF$V5 ~ aggTRF$V7 + aggTRF$V1, FUN= sum))
-colnames(repSumsTRF)<-c("V1","V2","V3")
-matTRF<-dcast(repSumsTRF, V1 ~ V2, value.var = "V3")
-matTRF[is.na(matTRF)]<-0
+#manipulation of Groups to Talgroups.csv
+DisTAL <- function()
+{
+  if(file.exists(GroupsFile)){
+    Groups <- read.csv(GroupsFile)
+    if(object.size(Groups) > 0){
+      Groups$Genome<-str_split_fixed(Groups$TAL,"\\|",2)[,1]
+      Groups$Group<-paste("TALGroup_",Groups$Group,sep="")
+      G<-Groups[,2:3]
+      GroupMat<-dcast(G,Group ~ Genome)
+      colnames(GroupMat) <- gsub(pattern = "\\.", "-", x = colnames(GroupMat))
+      colnames(GroupMat)[colnames(GroupMat)=="Group"] <- "V1"
+      write.csv(GroupMat, paste(RPath, "distal_GroupMatrix.csv", sep = ""), row.names = FALSE)
+    }else{print("disTALOut.TALgroups.csv was generated, but has no data")}
+  }else(print("disTALOut.TALgroups.csv was not generated."))
+}
 
-RepNames<-data.frame("Sequence"=matTRF$V1)
-RepNames$Name<-paste("Repeats",1:nrow(RepNames),sep="_")
-matTRF$V1<-RepNames$Name
-colnames(matTRF) <- gsub(pattern = "\\.", "-", x = colnames(matTRF))
-write.csv(matTRF, paste(RPath, "matTRF.csv", sep = ""), row.names = FALSE)
-write.csv(RepNames, paste(RPath, "RepeatNames.csv", sep = ""), row.names = FALSE)
-
-pdf(paste(RPath, "matTRFPheatmap.pdf", sep = ""))
-pheatmap(matTRF[,2:ncol(matTRF)])
-dev.off()
-
-
-#DisTAL data manipulations
-Groups$Genome<-str_split_fixed(Groups$TAL,"\\|",2)[,1]
-Groups$Group<-paste("TALGroup_",Groups$Group,sep="")
-G<-Groups[,2:3]
-GroupMat<-dcast(G,Group ~ Genome)
-colnames(GroupMat) <- gsub(pattern = "\\.", "-", x = colnames(GroupMat))
-colnames(GroupMat)[colnames(GroupMat)=="Group"] <- "V1"
-write.csv(GroupMat, paste(RPath, "distal_GroupMatrix.csv", sep = ""), row.names = FALSE)
-
-
-#Formatting and gathering of matrixes for creation of bound matrix
-orthoGCMatrix <- as.matrix(orthoGC[,1:(ncol(orthoGC)-1)], rownames.force = 0, nrow(5), ncol(5))
-colnames(orthoGCMatrix) <- gsub(pattern = "\\.", "-", x = colnames(orthoGCMatrix))
-colnames(orthoGCMatrix)[colnames(orthoGCMatrix)=="X"] <- "V1"
-write.csv(orthoGCMatrix, paste(RPath, "OrthoGCMatrix.csv", sep=""), row.names = FALSE)
+#Calls to above functions
+OrthoGC()
+perSpeciesStats()
+TandemRepeatFinder()
+DisTAL()

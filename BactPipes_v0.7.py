@@ -110,14 +110,15 @@ if __name__== '__main__':
         #Call R script for further parsing of data
         subprocess.Popen(["Rscript", "addScripts/BactROne.R", pipePath], close_fds=True).communicate()[0]
         BF.csvFix(Rfiles, FASTAlist)
-        subprocess.Popen(["Rscript", "addScripts/IdunsRBridge.R", pipePath], close_fds=True).communicate()[0]
+        subprocess.Popen(["Rscript", "addScripts/BactRTwo.R", pipePath], close_fds=True).communicate()[0]
 
         #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
         if providedCSV is not None:
             scorFile = BF.scoary(pipePath, providedCSV)
-            subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
-            subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
-            BF.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
+            if scorFile != 0:
+                subprocess.Popen(["Rscript", "addScripts/BactRThree.R", pipePath], close_fds=True).communicate()[0]
+                subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
+                BF.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
 
             #Call BayesTraitsV3 on prior results of pipeline
             BF.bayesPool(pipePath)
