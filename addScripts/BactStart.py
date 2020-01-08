@@ -1,123 +1,64 @@
-#!/usr/bin/python3.7
-#Bioinformatics Pipeline
-from addScripts import BactStart as BS
-from addScripts import BactFunctions as BF
-import os, shutil #Necessary for directory checks and file movements
-import time #To breakup processes and make output readable
-import sys #Allows exiting of code in case of irreconcilable error
-import argparse #Allows use of command line style argument call
-import subprocess #For execution of outside scripts
-import multiprocessing as mp #Run run multiple processes at once
-import pandas as pd
-import time
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+import shutil
 
-#Prevents creation of .pyc files when running
-sys.dont_write_bytecode = True
-
-#Parser from argparse for command line refinement
-parserPS = argparse.ArgumentParser()
-parserPS.add_argument("name", help="Name of project. Must be non-existant directory if running first half of pipeline. If just running the second half, must use project directory created by / in same format as Idun's Pipeline")
-parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
-parserPS.add_argument("-P","--pipeStart", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing")
-parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated")
-args = parserPS.parse_args()
-
-def tandemRepeatFinder(tanFile):
-    subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
-
-#Main section / execution of code
-if __name__== '__main__':
-
-    #Assignment of pipe scope variables
-    pipeStart = False
-    pipeScoary = False
-    if args.scoary is not None:
-        pipeScoary = True
-    if args.pipeStart is not None:
-        pipeStart = True
-
-    #Processor variable, halves if greater than 10 per project guidelines by Alvaro
-    if int(args.processors) <= 10:
-        CPUs = args.processors
-    else:
-        CPUs = (int(args.processors)//2)
-    CPUs = str(CPUs)
-
-    #If neither pipeStart or pipeScoary is initiated with True, pipeline won't run
-    if pipeStart is False and pipeScoary is False:
-        print("Neither start or end of pipe initialized. Exiting...")
+#Verify + Create directories
+def pipeStart(name, filePath):
+    if not name.endswith("/"):
+        name = name + "/"
+    fullPath = "./" + name
+    if not filePath.endswith("/"):
+        filePath = filePath + "/"
+    if not os.path.isdir(filePath):
+        print ("%s is not a valid directory" % filePath)
         sys.exit()
-
-    #Assignment of pipePath and FASTAlist, dependent on mode being run
-    if pipeStart is True:
-        if args.pipeStart is None:
-            print("Must provide a directory with FASTA files when running initial section of pipeline.\nExiting...")
-            sys.exit()
-        pipePath, fastaPath = BS.pipeStart(args.name, args.pipeStart)
+    if os.path.isdir(fullPath):
+        print ("The directory %s already exists." % fullPath)
+        sys.exit()
     else:
-        pipePath, FASTAlist = BS.pipeDetour(args.name)
+        print ("Creating directory %s" % fullPath)
+        try:
+            os.mkdir(fullPath)
+            os.mkdir(fullPath + "FASTAfiles")
+            os.mkdir(fullPath + "TRFfiles")
+            os.mkdir(fullPath + "PROKKAfiles")
+            os.mkdir(fullPath + "PROKKAfiles/FAAs")
+            os.mkdir(fullPath + "ORTHOfiles")
+            os.mkdir(fullPath + "RVDfiles")
+            os.mkdir(fullPath + "DISTALfiles")
+            os.mkdir(fullPath + "Rfiles")
+            os.mkdir(fullPath + "KSNP3files")
+            os.mkdir(fullPath + "SCOARYfiles")
+            os.mkdir(fullPath + "BAYESfiles")
+            os.mkdir(fullPath + "Results")
+            os.mkdir(fullPath + "Logging")
+        except OSError:
+            print("Creation of the directory failed. Exiting...")
+            sys.exit()
+        else:
+            print("Succesfully created the directory")
+    return fullPath, filePath;
 
-    #Initiate path variables and file location variables (created after start of main section)
-    FASTAfiles = pipePath + "FASTAfiles/"
-    TRFfiles = pipePath + "TRFfiles/"
-    PROKKAfiles = pipePath + "PROKKAfiles/"
-    ORTHOfiles = pipePath + "ORTHOfiles/"
-    RVDfiles = pipePath + "RVDfiles/"
-    DISTALfiles = pipePath + "DISTALfiles/"
-    Rfiles = pipePath + "Rfiles/"
-    KSNP3files = pipePath + "KSNP3files/"
-    SCOARYfiles = pipePath + "SCOARYfiles/"
-    BAYESfiles = pipePath + "BAYESfiles/"
-    RESULTSfiles = pipePath + "Results/"
-    LOGfiles = pipePath + "Logging/"
-    providedCSV = args.scoary
+def pipeDetour(name):
+    if not name.endswith("/"):
+        name = name + "/"
+    fileExt = [".fa", ".fasta", ".fas", "fna"]
+    fileList = []
+    for file in os.listdir(name + "FASTAfiles/"):
+        if file.lower().endswith(tuple(fileExt)):
+            fileList.append(file)
+    return name, fileList;
 
-    #Gather FASTA files, copy to project folder for further use
-    if pipeStart is True:
-        FASTAlist = BS.collectFasta(fastaPath, FASTAfiles)
 
-        #Call to TandemRepeatsFinder, done individually to allow processing of large batches of Files
-        workerPool = mp.Pool(processes=int(CPUs),)
-        workerPool.map(tandemRepeatFinder, FASTAlist)
-        workerPool.close()
-        workerPool.join()
-
-        #Parsing of TRF files
-        BF.trfParse(TRFfiles, FASTAlist)
-
-        #Establish first set of processes for the pipeline and pass their relevant parameters
-        prokkaProcess = mp.Process(target = BF.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
-        RVDProcess = mp.Process(target = BF.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-        KSNP3Process = mp.Process(target = BF.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
-
-        #Start processes
-        prokkaProcess.start()
-        RVDProcess.start()
-        KSNP3Process.start()
-
-        #Rejoin processes with main thread, won't continue till each finishes
-        prokkaProcess.join()
-        RVDProcess.join()
-        KSNP3Process.join()
-
-        #Creation of faaConcatenated and rvdNucs files for end Results
-        BF.concatFaa(PROKKAfiles + "FAAs/", RESULTSfiles)
-        BF.concatNuc(RVDfiles, RESULTSfiles)
-
-    #Second section of pipeline, requires secondHalf to be True
-    if pipeScoary is True:
-
-        #Call R script for further parsing of data
-        subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
-        BF.csvFix(Rfiles, FASTAlist)
-        subprocess.Popen(["Rscript", "addScripts/IdunsRBridge.R", pipePath], close_fds=True).communicate()[0]
-
-        #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
-        if providedCSV is not None:
-            scorFile = BF.scoary(pipePath, providedCSV)
-            subprocess.Popen(["Rscript", "addScripts/Iduns3rdR.R", pipePath], close_fds=True).communicate()[0]
-            subprocess.Popen(["scoary", "-t", scorFile, "-g", pipePath + "Rfiles/boundMatrix.csv", "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
-            BF.ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, PROKKAfiles + "FAAs/")
-
-            #Call BayesTraitsV3 on prior results of pipeline
-            BF.bayesPool(pipePath)
+#Checks FASTA path for .FASTA txt files, creates new directory in project directory with copies of files
+def collectFasta(src, dst):
+    numberOfFiles = 0
+    fileExt = [".fa", ".fasta", ".fas", "fna"]
+    fileList = []
+    for file in os.listdir(src):
+        if file.lower().endswith(tuple(fileExt)):
+            fileList.append(file)
+            shutil.copyfile(src + file, dst + file)
+    return fileList;

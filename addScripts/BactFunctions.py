@@ -268,4 +268,4 @@ def bayesCall(iterableColumns, path):
         bayesOut.writelines(iterableColumns + "\t" + dependantVal + "\t" + independantVal + "\t" + str(finalVal) + "\n")
     for item in os.listdir(path + "BAYESfiles/"):
         if iterableColumns in item:
-            os.remove(path + "BAYESfiles/" + item)---
+            os.remove(path + "BAYESfiles/" + item)
