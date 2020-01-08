@@ -108,7 +108,7 @@ if __name__== '__main__':
     if pipeScoary is True:
 
         #Call R script for further parsing of data
-        subprocess.Popen(["Rscript", "addScripts/IdunsRScript.R", pipePath], close_fds=True).communicate()[0]
+        subprocess.Popen(["Rscript", "addScripts/BactROne.R", pipePath], close_fds=True).communicate()[0]
         BF.csvFix(Rfiles, FASTAlist)
         subprocess.Popen(["Rscript", "addScripts/IdunsRBridge.R", pipePath], close_fds=True).communicate()[0]
 
