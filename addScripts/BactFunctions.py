@@ -128,8 +128,8 @@ def csvFix(Rfiles, FASTAlist):
     else:
         print("matTRF.csv was not generated, not applying csvFix")
     if(os.path.isfile(Rfiles + "OrthoGCMatrix.csv")):
-        orthoCSV = pd.read_csv(Rfiles + "OrthoGCMatrix.csv", index_col=0
-        orthoCols = list(orthoCSV.columns)
+        orthoCSV = pd.read_csv(Rfiles + "OrthoGCMatrix.csv", index_col=0)
+        orthoCols = (list(orthoCSV.columns))
         orthoCompare = (list(set(FASTAprefix).difference(orthoCols)))
         for col in orthoCompare:
             print("Missing " + col + " in OrthoGCMatrix.csv. Adding, setting values to 0")
@@ -166,17 +166,17 @@ def scoary(pipePath, providedCSV):
                 return scorFile
             else:
                 print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
-                return 0
+                return None
         else:
             print("Missing boundMatrix, unable to run Scoary")
-            return 0
+            return None
     else:
         print("Provided csv does not end with csv extension, unable to proceed.")
-        return 0
+        return None
 
 
 #Function for routing needed data to R for parsing of various data sets
-def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, KSNP3files, RESULTSfiles, RVDfiles, faaDir):
+def scoaryParse(SCOARYfiles, Rfiles, DISTALfiles, TRFfiles, ORTHOfiles, RESULTSfiles, Logging):
     for file in os.listdir(SCOARYfiles):
         if file.endswith("results.csv"):
             scoaryCSV = (SCOARYfiles + file)
@@ -187,30 +187,32 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         sys.exit()
     else:
         repeatsCSV = Rfiles + "RepeatNames.csv"
-        boundFile = Rfiles + "boundMatrix.csv"
         distalGroups = DISTALfiles + "Outputs/disTALOut.TALgroups.csv"
         parsedTRF = TRFfiles + "trfParsed.txt"
         orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
-        treeFile = KSNP3files + "kSNP3_results/tree.ML.tre"
         comboFile = DISTALfiles + "rvdCombo.FASTA"
-        concatenated = (RESULTSfiles + "rvdNucs.csv")
         faaFile = (RESULTSfiles + "faaConcatenated.faa")
         rvdNucs = (RESULTSfiles + "rvdNucs.csv")
-        subprocess.Popen(["Rscript", "addScripts/BactRThree.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile, rvdNucs], close_fds=True).communicate()[0]
+        subprocess.Popen(["Rscript", "addScripts/BactRThree.R", scoaryCSV, repeatsCSV, distalGroups, parsedTRF, orthogroupsTXT, comboFile, RESULTSfiles, faaFile, rvdNucs, Logging], close_fds=True).communicate()[0]
 
 
 #Parsing of BayesGenerator.csv, then shuttling of data to Bayes
 def bayesPool(pipePath):
     bayesGen = (pipePath + "BAYESfiles/BayesGenerator.csv")
     if(os.path.exists(bayesGen)):
-        bayesData = pd.read_csv(bayesGen, index_col=0)
-        with open(pipePath + "Results/bayesResults.txt", 'w') as bayesOut:
-            bayesOut.writelines("Gene\tDependent\tIndependent\t2*(dep-ind)\n")
-        bayesList = (bayesData.columns)
-        pool = mp.Pool(processes=10,)
-        pool.starmap(bayesCall, zip(bayesList, repeat(pipePath)))
-        pool.close()
-        pool.join()
+        if(os.path.exists(pipePath + "BAYESfiles/Ktree.nexus")):
+            bayesData = pd.read_csv(bayesGen, index_col=0)
+            with open(pipePath + "Results/bayesResults.txt", 'w') as bayesOut:
+                bayesOut.writelines("Gene\tDependent\tIndependent\t2*(dep-ind)\n")
+            bayesList = (bayesData.columns)
+            pool = mp.Pool(processes=10,)
+            pool.starmap(bayesCall, zip(bayesList, repeat(pipePath)))
+            pool.close()
+            pool.join()
+        else:
+            print("Missing Ktree.nexus file, unable to process Bayes.")
+    else:
+        print("Missing BayesGenerator.csv, unable to process Bayes.")
 
 #Helper function for pool process of BAYESfiles
 def bayesCall(iterableColumns, path):

@@ -20,9 +20,9 @@ KTreeFunc <- function()
     KTree <- read.tree(KTreeFile)
     if(object.size(KTree)>0)
     {
-      Ktree$node.label<-NULL #delete node labels
-      Ktree <- midpoint(Ktree)
-      write.nexus(Ktree,file=(paste(projectPath, "BAYESfiles/Ktree.nexus",sep="")),translate = TRUE)
+      KTree$node.label<-NULL #delete node labels
+      KTree <- midpoint(KTree)
+      write.nexus(KTree,file=(paste(projectPath, "BAYESfiles/Ktree.nexus",sep="")),translate = TRUE)
     }else{write("tree.ML.tre file has insufficient data, unable to create Ktree.nexus.", file = err, append = TRUE)}
   }else{write("tree.ML.tre file was not found, unable to create Ktree.nexus.", file = err, append = TRUE)}
 }
@@ -65,13 +65,13 @@ BoundMatFunc <- function()
           write.csv(FORBT,paste(projectPath, "BAYESfiles/BayesGenerator.csv", sep=""),row.names = TRUE)
         }else{write("Provided csv has insufficient data, unable to create BayesGenerator.csv.", file = err, append = TRUE)}
       }else{write("No provided csv found, unable to create BayesGenerator.csv.", file = err, append = TRUE)}
-    }else(write("Bound Matrix has insufficient data, unable to create BayesGenerator.csv", file = err, append = TRUE)}
+    }else{write("Bound Matrix has insufficient data, unable to create BayesGenerator.csv", file = err, append = TRUE)}
   }else{write("No Bound Matrix, unable to create BayesGenerator.csv.", file = err, append = TRUE)}
 }
 
 #Open error file for writing
-errFile <- paste(projectPath, "Rfiles/RErrors.txt", sep = "")
-err <- file(errFile)
+errFile <- paste(projectPath,"Logging/RErrors.txt", sep = "")
+err <- file(paste(projectPath,"Logging/RErrors.txt", sep = ""))
 
 #call to above functions
 KTreeFunc()
