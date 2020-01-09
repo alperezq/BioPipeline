@@ -32,7 +32,7 @@ OrthoGC <- function()
       orthoGCMatrix <- as.matrix(orthoGC[,1:(ncol(orthoGC)-1)], rownames.force = 0, nrow(5), ncol(5))
       colnames(orthoGCMatrix) <- gsub(pattern = "\\.", "-", x = colnames(orthoGCMatrix))
       colnames(orthoGCMatrix)[colnames(orthoGCMatrix)=="X"] <- "V1"
-      write.csv(orthoGCMatrix, paste(RPath, "OrthoGCMatrix.csv", sep=""), row.names = FALSE)
+      write.csv(orthoGCMatrix, paste(projectPath, "Rfiles/OrthoGCMatrix.csv", sep=""), row.names = FALSE)
     }else{write("Orthogroups.GeneCount.csv was generated, but has no data", file = err, append = TRUE)}
   }else{write("Orthogroups.GeneCount.csv was not generated.", file = err, append = TRUE)}
 }
@@ -45,7 +45,7 @@ perSpeciesStats <- function()
     if(object.size(statsPerSpecies) > 0){
       statsPerc <- statsPerSpecies[statsPerSpecies$X == "Percentage of genes in species-specific orthogroups",]
       statsPerc <- as.data.frame(t(statsPerc))
-      write.csv(statsPerc, paste(RPath, "statsPerSpeciesR.csv", sep = ""),  row.names = TRUE)
+      write.csv(statsPerc, paste(projectPath, "Rfiles/statsPerSpeciesR.csv", sep = ""),  row.names = TRUE)
     }else{write("Statistics_PerSpecies.csv was generated, but has no data.", file = err, append = TRUE)}
   }else{write("Statistics_PerSpecies.csv was not generated", file = err, append = TRUE)}
 }
@@ -66,8 +66,8 @@ TandemRepeatFinder <- function()
       RepNames$Name<-paste("Repeats",1:nrow(RepNames),sep="_")
       matTRF$V1<-RepNames$Name
       colnames(matTRF) <- gsub(pattern = "\\.", "-", x = colnames(matTRF))
-      write.csv(matTRF, paste(RPath, "matTRF.csv", sep = ""), row.names = FALSE)
-      write.csv(RepNames, paste(RPath, "RepeatNames.csv", sep = ""), row.names = FALSE)
+      write.csv(matTRF, paste(projectPath, "Rfiles/matTRF.csv", sep = ""), row.names = FALSE)
+      write.csv(RepNames, paste(projectPath, "Rfiles/RepeatNames.csv", sep = ""), row.names = FALSE)
     }else{write("trfParsed.txt was generated, but has no data.", file = err, append = TRUE)}
   }else{write("trfParsed.txt as not generated", file = err, append = TRUE)}
 }
@@ -84,14 +84,14 @@ DisTAL <- function()
       GroupMat<-dcast(G,Group ~ Genome)
       colnames(GroupMat) <- gsub(pattern = "\\.", "-", x = colnames(GroupMat))
       colnames(GroupMat)[colnames(GroupMat)=="Group"] <- "V1"
-      write.csv(GroupMat, paste(RPath, "distal_GroupMatrix.csv", sep = ""), row.names = FALSE)
+      write.csv(GroupMat, paste(projectPath, "Rfiles/distal_GroupMatrix.csv", sep = ""), row.names = FALSE)
     }else{write("disTALOut.TALgroups.csv was generated, but has no data", file = err, append = TRUE)}
   }else{write("disTALOut.TALgroups.csv was not generated.", file = err, append = TRUE)}
 }
 
 
 #Creation of text file for errors
-errFile <- paste(projectPath, "Rfiles/RErrors.txt", sep = "")
+errFile <- paste(projectPath, "Logging/RErrors.txt", sep = "")
 file.create(errFile)
 err <- file(errFile)
 
