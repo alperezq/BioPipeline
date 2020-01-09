@@ -39,10 +39,10 @@ To call the pipeline please be inside of the overarching directory, currently na
 
 Following are the current list of requirements for the pipeline. Currently you must install these yourself, portions of this may be altered down the road.
 
-    ####Python Requirements
+    #### Python Requirements
     1. Python 3
     2. Modules:
         * OS, shutil, time, sys, argparse, subprocess, multiprocessing, pandas
-    ###R Requirements
+    ### R Requirements
     1. Libraries:
         * ape, argparse, ComplexHeatmap, dendextend, dplyr, ggplot2, plyr, phangorn, pheatmap, reshape2, stringr
