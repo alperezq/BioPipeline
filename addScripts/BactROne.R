@@ -33,8 +33,8 @@ OrthoGC <- function()
       colnames(orthoGCMatrix) <- gsub(pattern = "\\.", "-", x = colnames(orthoGCMatrix))
       colnames(orthoGCMatrix)[colnames(orthoGCMatrix)=="X"] <- "V1"
       write.csv(orthoGCMatrix, paste(RPath, "OrthoGCMatrix.csv", sep=""), row.names = FALSE)
-    }else{print("Orthogroups.GeneCount.csv was generated, but has no data")}
-  }else{print("Orthogroups.GeneCount.csv was not generated.")}
+    }else{write("Orthogroups.GeneCount.csv was generated, but has no data", file = err, append = TRUE)}
+  }else{write("Orthogroups.GeneCount.csv was not generated.", file = err, append = TRUE)}
 }
 
 #Manipulation of statsPerSpecies
@@ -46,10 +46,8 @@ perSpeciesStats <- function()
       statsPerc <- statsPerSpecies[statsPerSpecies$X == "Percentage of genes in species-specific orthogroups",]
       statsPerc <- as.data.frame(t(statsPerc))
       write.csv(statsPerc, paste(RPath, "statsPerSpeciesR.csv", sep = ""),  row.names = TRUE)
-    }else{
-      print("Statistics_PerSpecies.csv was generated, but has no data.")
-    }
-  }else{print('Statistics_PerSpecies.csv was not generated')}
+    }else{write("Statistics_PerSpecies.csv was generated, but has no data.", file = err, append = TRUE)}
+  }else{write("Statistics_PerSpecies.csv was not generated", file = err, append = TRUE)}
 }
 
 #Manipulation of trf -> matTRf and repeatNames
@@ -70,8 +68,8 @@ TandemRepeatFinder <- function()
       colnames(matTRF) <- gsub(pattern = "\\.", "-", x = colnames(matTRF))
       write.csv(matTRF, paste(RPath, "matTRF.csv", sep = ""), row.names = FALSE)
       write.csv(RepNames, paste(RPath, "RepeatNames.csv", sep = ""), row.names = FALSE)
-    }else{print("trfParsed.txt was generated, but has no data.")}
-  }else{print("trfParsed.txt as not generated")}
+    }else{write("trfParsed.txt was generated, but has no data.", file = err, append = TRUE)}
+  }else{write("trfParsed.txt as not generated", file = err, append = TRUE)}
 }
 
 #manipulation of Groups to Talgroups.csv
@@ -87,12 +85,20 @@ DisTAL <- function()
       colnames(GroupMat) <- gsub(pattern = "\\.", "-", x = colnames(GroupMat))
       colnames(GroupMat)[colnames(GroupMat)=="Group"] <- "V1"
       write.csv(GroupMat, paste(RPath, "distal_GroupMatrix.csv", sep = ""), row.names = FALSE)
-    }else{print("disTALOut.TALgroups.csv was generated, but has no data")}
-  }else(print("disTALOut.TALgroups.csv was not generated."))
+    }else{write("disTALOut.TALgroups.csv was generated, but has no data", file = err, append = TRUE)}
+  }else{write("disTALOut.TALgroups.csv was not generated.", file = err, append = TRUE)}
 }
+
+
+#Creation of text file for errors
+errFile <- paste(projectPath, "Rfiles/RErrors.txt", sep = "")
+file.create(errFile)
+err <- file(errFile)
 
 #Calls to above functions
 OrthoGC()
 perSpeciesStats()
 TandemRepeatFinder()
 DisTAL()
+
+close(err)

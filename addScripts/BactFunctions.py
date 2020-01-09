@@ -163,13 +163,16 @@ def scoary(pipePath, providedCSV):
             if 'V1' in boundTraitCompare:
                 boundTraitCompare.remove('V1')
             if len(boundTraitCompare) is 0:
-                return scorFile;
+                return scorFile
             else:
                 print("Columns of boundMatrix do not match rows of provided CSV, unable to run Scoary")
+                return 0
         else:
             print("Missing boundMatrix, unable to run Scoary")
+            return 0
     else:
         print("Provided csv does not end with csv extension, unable to proceed.")
+        return 0
 
 
 #Function for routing needed data to R for parsing of various data sets
@@ -193,19 +196,21 @@ def ksnpParse(SCOARYfiles, Rfiles, scorFile, DISTALfiles, TRFfiles, ORTHOfiles, 
         concatenated = (RESULTSfiles + "rvdNucs.csv")
         faaFile = (RESULTSfiles + "faaConcatenated.faa")
         rvdNucs = (RESULTSfiles + "rvdNucs.csv")
-        subprocess.Popen(["Rscript", "addScripts/IdunsSecondR.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile, rvdNucs], close_fds=True).communicate()[0]
+        subprocess.Popen(["Rscript", "addScripts/BactRThree.R", scoaryCSV, repeatsCSV, boundFile, scorFile, distalGroups, parsedTRF, orthogroupsTXT, treeFile, comboFile, RESULTSfiles, concatenated, faaFile, rvdNucs], close_fds=True).communicate()[0]
 
 
 #Parsing of BayesGenerator.csv, then shuttling of data to Bayes
 def bayesPool(pipePath):
-    bayesData = pd.read_csv(pipePath + "BAYESfiles/BayesGenerator.csv", index_col=0)
-    with open(pipePath + "Results/bayesResults.txt", 'w') as bayesOut:
-        bayesOut.writelines("Gene\tDependent\tIndependent\t2*(dep-ind)\n")
-    bayesList = (bayesData.columns)
-    pool = mp.Pool(processes=10,)
-    pool.starmap(bayesCall, zip(bayesList, repeat(pipePath)))
-    pool.close()
-    pool.join()
+    bayesGen = (pipePath + "BAYESfiles/BayesGenerator.csv")
+    if(os.path.exists(bayesGen)):
+        bayesData = pd.read_csv(bayesGen, index_col=0)
+        with open(pipePath + "Results/bayesResults.txt", 'w') as bayesOut:
+            bayesOut.writelines("Gene\tDependent\tIndependent\t2*(dep-ind)\n")
+        bayesList = (bayesData.columns)
+        pool = mp.Pool(processes=10,)
+        pool.starmap(bayesCall, zip(bayesList, repeat(pipePath)))
+        pool.close()
+        pool.join()
 
 #Helper function for pool process of BAYESfiles
 def bayesCall(iterableColumns, path):

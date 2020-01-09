@@ -1,49 +1,111 @@
-library(ape)
-library(pheatmap)
-library(stringr)
 library(dplyr)
+library(ape)
+library(reshape2)
+library(stringr)
+library(pheatmap)
 library(phangorn)
+library(dendextend)
 library(argparse)
 
-args <- commandArgs(trailingOnly=TRUE)
-projectPath <- args[1]
+#collects arguments
+args <- commandArgs(trailingOnly = TRUE)
 
-######## read and modify phylogenetic tree
-Ktree <- read.tree(paste(projectPath, "KSNP3files/kSNP3_results/tree.ML.tre", sep=""))
-
-Ktree$node.label<-NULL #delete node labels
-Ktree <- midpoint(Ktree)
-write.nexus(Ktree,file=(paste(projectPath, "BAYESfiles/Ktree.nexus",sep="")),translate = TRUE)
-
-#### Write files for each trait Bayestraits
-
-BMAT <- read.csv(paste(projectPath, "Rfiles/boundMatrix.csv", sep="")) # matrix containing gene counts obtained with orthofinder
-colnames(BMAT)<- gsub("\\.","-",colnames(BMAT))
-
-SPEC <- read.csv(paste(projectPath, "SCOARYfiles/providedCSV.csv", sep=""))
-colnames(SPEC)[1]<-"ID"
-
-BMAT <- cbind("ID"=BMAT[,1],BMAT[,colnames(BMAT) %in% SPEC[,1]]) # verifies that the names in bound matrix are in the trait file
-
-#Turn numeric columns into 0s and 1s
-B1<-BMAT[,2:ncol(BMAT)]
-B1<- as.data.frame(apply(B1, 2, function(x) ifelse(x > 1, 1, x))) # turn counts into presence/absence
-BMAT<-cbind("ID"=BMAT[,1],B1)
-BMAT <- BMAT[rowSums(BMAT[,2:(ncol(BMAT))])>1,] # eliminates rows where the trait is only in one genome
-BMAT <- BMAT[rowSums(BMAT[,2:(ncol(BMAT))])<(ncol(BMAT)),]# eliminates rown where the trait is in ALL genomes
+scoaryCSV = read.csv(args[1])
+repeatCSV = read.csv(args[2])
+boundCSV = read.csv(args[3])
+traitCSV = read.csv(args[4])
+talGroupsCSV = read.csv(args[5], stringsAsFactors = FALSE)
+trfTXT = read.delim(args[6],sep = " ",header = FALSE)
+orthogroupsTXT = read.delim(args[7],sep=" ",header = FALSE)
+kTree = read.tree(args[8])
+rvdFASTA = read.FASTA(args[9],type="AA")
+resultDIR = args[10]
+conCSV = read.csv(args[11])
+faaFASTA = read.FASTA(args[12],type="AA")
+rvdNucs = read.csv(args[13])
 
 
-FORBT <- BMAT
-FORBT <- as.data.frame(t(FORBT[,2:ncol(FORBT)])) # transpose the matrix
-colnames(FORBT)<-BMAT$ID
+#Functions for creation of datasets
+rep_trf_file <- function()
+{
+  if(object.size(repeatCSV) > 0)
+  {
+    if(object.size(trfTXT) > 0)
+    {
+      repeatWithTrf <- left_join(repeatCSV,trfTXT,by=c("Sequence"="V7"))
+      repTrfIds <- repeatWithTrf[repeatWithTrf$Name %in% ids,]
+      if(nrow(repTrfIds) > 0)
+      {
+        write.csv(repTrfIds, paste(resultDIR, "repTrfIds.csv", sep=""), row.names=TRUE)
+      }else{write("repTRFIds lacking data, unable to create file", file = err, append = TRUE)}
+    }else{write("Lacking data in trf txt, unable to create repTRFIds csv", file = err, append = TRUE)}
+  }else{write("Lacking data in repeat csv, unable to create repTRFIds csv", file = err, append = TRUE)}
+}
 
-FORBT$Name <- rownames(FORBT)
-FORBT$Name <- gsub("\\.","-",FORBT$Name) #eliminate characters that interfere with downstream analysis
-FORBT$Name <- gsub("\\-1","",FORBT$Name)
-rownames(FORBT)<-FORBT$Name
-FORBT <- subset(FORBT, select=-c(Name))
-FORBT <- FORBT[!(row.names(FORBT) %in% ("ID")),]
+rvd_ids_file <- function()
+{
+  if(object.size(rvdFASTA) > 0)
+  {
+    rvdFASTA <- rvdFASTA[names(rvdFASTA) %in% talIDS]
+    if(object.size(rvdFASTA) > 0)
+    {
+      write.FASTA(rvdFASTA,paste(resultDIR, "rvdIds.FASTA", sep=""))
+    }else{write("rvdFASTA in rvd_ids_file function lacking data, unable to create file", file = err, append = TRUE)}
+  }else{write("rvdFASTA lacking data, unable to create file", file = err, append = TRUE)}
+}
 
-TC <-  SPEC[,2] #METADATA COLUMN CONTAINING TRAIT TO COMPARE
+rvd_nucs_file <- function()
+{
+  if(object.size(rvdNucs) > 0)
+  {
+    newRvd <- rvdNucs[rvdNucs$ID %in% talIDS,]
+    write.csv(newRvd,paste(resultDIR, "rvdIDs.csv"))
+  }else{write("rvdNucs lacking data, unable to modify file", file = err, append = TRUE)}
+}
 
-write.csv(FORBT,paste(projectPath, "BAYESfiles/BayesGenerator.csv", sep=""),row.names = TRUE)
+ortho_melt <- function()
+{
+  if(object.size(orthogroupsTXT) > 0)
+  {
+    orthoMelt <- melt(orthogroupsTXT,id.vars = "V1")
+    orthoMelt <- orthoMelt[,c(1,3)]
+    orthoMelt <- orthoMelt[orthoMelt$value != "",]
+    orthoMelt$V1 <- gsub(":", "",orthoMelt$V1)
+
+    if(object.size(faaFASTA) > 0)
+    {
+      fastaIds <-data.frame("Short_ID"=str_split_fixed(names(faaFASTA)," ",3)[,2],"fastaID"=names(faaFASTA))
+      orthoFastaIds <- left_join(fastaIds,orthoMelt,by=c("Short_ID"="value"))
+      orthoFastaIds$New_ID <- paste(orthoFastaIds$V1,orthoFastaIds$fastaID,sep=":")
+      names(faaFASTA) <- orthoFastaIds$New_ID
+      orthoSort <- sort(orthoFastaIds$New_ID[orthoFastaIds$V1 %in% ids])
+      faaOrthoSort <- faaFASTA[names(faaFASTA) %in% orthoSort]
+      faaOrthoOrder <- faaOrthoSort[order(names(faaOrthoSort))]
+
+      if(object.size(faaOrthoOrder) > 0)
+      {
+        write.FASTA(faaOrthoOrder,paste(resultDIR, "faaIds.FASTA", sep=""))
+      }else{write("faaOrthoOrder in ortho_melt function lacking data, unable to create file", file = err, append = TRUE)}
+    }else{write("faaFASTA file lacking data, unable to continue with Ortho Melt function", file = err, append = TRUE)}
+  }else{write("Orthogroups txt lacking data, unable to continue with Ortho Melt function", file = err, append = TRUE)}
+}
+
+#Open error file for writing
+errFile <- paste(projectPath, "Rfiles/RErrors.txt", sep = "")
+err <- file(errFile)
+
+#Creating ideas
+if(nrow(scoaryCSV) > 0)
+{
+  ids <- scoaryCSV[scoaryCSV$Bonferroni_p<0.05,1]
+  rep_trf_file()
+  ortho_melt()
+  rvd_nucs_file()
+  if(nrow(talGroupsCSV) > 0)
+  {
+    talIDS <- talGroupsCSV$TAL[paste("TALGroup_",talGroupsCSV$Group,sep="") %in% ids]
+    rvd_ids_file()
+  }else{write("talGroups csv lacking data, unable to create talIDS", file = err, append = TRUE)}
+}else{write("Scoary csv lacking data, unable to create ids", file = err, append = TRUE)}
+
+close(err)

@@ -29,24 +29,24 @@ boundMatrixCreation <- function()
     if(object.size(orthoGCMatrix) > 0){
       dataList[[i]] <- orthoGCMatrix
       i <- i + 1
-    }else{print("OrthoGCMatrix.csv was generated, but has no data.")}
-  }else{print("OrthoGCMatrix.csv was not generated, not using for Bound Matrix.")}
+    }else{write("OrthoGCMatrix.csv was generated, but has no data.", file = err, append = TRUE)}
+  }else{write("OrthoGCMatrix.csv was not generated, not using for Bound Matrix.", file = err, append = TRUE)}
 
   if(file.exists(matTRFFile)){
     matTRF <- read.csv(matTRFFile)
     if(object.size(matTRF) > 0){
       dataList[[i]] <- matTRF
       i <- i + 1
-    }else{print("matTRF.csv was generated, but has no data.")}
-  }else{print("matTRF.csv was not generated, not using for Bound Matrix.")}
+    }else{write("matTRF.csv was generated, but has no data.", file = err, append = TRUE)}
+  }else{write("matTRF.csv was not generated, not using for Bound Matrix.", file = err, append = TRUE)}
 
   if(file.exists(groupMatFile)){
     groupMat <- read.csv(groupMatFile)
     if(object.size(groupMat) > 0){
       dataList[[i]] <- groupMatFile
       i <- i + 1
-    }else{print("distal_GroupMatrix.csv was generated, but has no data.")}
-  }else{print("distal_GroupMatrix.csv was not generated, not using for Bound Matrix.")}
+    }else{write("distal_GroupMatrix.csv was generated, but has no data.", file = err, append = TRUE)}
+  }else{write("distal_GroupMatrix.csv was not generated, not using for Bound Matrix.", file = err, append = TRUE)}
 
   #Creation of bound matrix after manipulations in python3
   if(length(dataList) > 0){
@@ -54,8 +54,11 @@ boundMatrixCreation <- function()
     boundMatrixFix <- slice(boundMatrix, 1:(n()-2))
     colnames(boundMatrixFix) <- gsub(".","-", colnames(boundMatrixFix), fixed = TRUE)
     write.csv(boundMatrixFix, paste(projectPath, "Rfiles/boundMatrix.csv", sep = ""), row.names = FALSE)
-  }else{print("None of required csv's are available, unable to generate boundMatrix.csv.")}
+  }else{write("None of required csv's are available, unable to generate boundMatrix.csv.", file = err, append = TRUE)}
 }
 
 #Call to above function
+errFile <- paste(projectPath, "Rfiles/RErrors.txt", sep = "")
+err <- file(errFile)
 boundMatrixCreation()
+close(err)
