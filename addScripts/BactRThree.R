@@ -21,7 +21,7 @@ orthogroupsTXTFile <- args[5]
 rvdFASTAFile <- args[6]
 resultDIR <- args[7]
 
-faaFASTAFile <- args[18]
+faaFASTAFile <- args[8]
 rvdNucsFile <- args[9]
 Logging <- args[10]
 

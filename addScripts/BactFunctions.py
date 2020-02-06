@@ -56,29 +56,42 @@ def RVDminer(RVDFiles, RVDsrc, RVDdst, DISdst):
     shutil.move("./_Inline", RVDdst + "_Inline")
     comboFile = DISdst + "rvdCombo.FASTA"
     subprocess.Popen(["perl", "DisTAL_v1.3_Groups.pl", "-m", "T", comboFile, "disTALOut", "4.5"], close_fds=True).communicate()[0]
-    shutil.move(os.getcwd() + "/" "Outputs", DISdst + "Outputs")
+    shutil.move(os.getcwd() + "/" + "Outputs", DISdst + "Outputs")
 
 
 #Function for use of KSNP3, appropriate parsing, and movement of files
 def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
-    ksnpGenomes = ksnpPath + "ksnpGenomes.txt"
-    with open(ksnpGenomes, "w") as outFile:
-        for file in ksnpList:
-            prefixKSNP = file.split(".")
-            outFile.write(os.path.abspath(faPath + file) + "\t" + prefixKSNP[0] + "\n")
-    subprocess.Popen(["MakeFasta", ksnpGenomes, ksnpPath + "ForKchoser"], close_fds=True).communicate()[0]
-    subprocess.Popen(["Kchooser", ksnpPath + "ForKchoser"], close_fds=True).communicate()[0]
-    shutil.move("Kchooser.report", ksnpPath + "Kchooser.report")
-    with open(ksnpPath + "Kchooser.report", "r") as kOut:
-        content = kOut.readlines()
-        for line in content:
-            if re.match(r'The optimum value of K is (.*)\.', line):
-                tempInt = re.findall(r'The optimum value of K is (.*)\.', line)
-                ksnpInt = tempInt[0]
-                subprocess.Popen(["kSNP3", "-in", ksnpGenomes, "-k", str(ksnpInt), "-outdir", ksnpPath + "kSNP3_results", "-ML", "-CPU", str(ksnpCpus)], close_fds=True).communicate()[0]
-                shutil.move("fasta_list", ksnpPath + "fasta_list")
-            else:
-                print("Unable to find optimum value of K")
+        ksnpGenomes = ksnpPath + "ksnpGenomes"
+        #Size of sets to split the ksnpList in to for easier processing by kSNP3 (avoids seg faults!!!)
+        basis = 75
+        splitKsnpList = [ksnpList[i * basis:(i+1)*basis] for i in range((len(ksnpList) + basis - 1) // basis)]
+        with(open(ksnpGenomes, 'w')) as outFile:
+            for file in ksnpList:
+                prefixKSNP = file.split(".")
+                outFile.write(os.path.abspath(faPath + file) + "\t" + prefixKSNP[0] + "\n")
+        for i in range(len(splitKsnpList)):
+            with(open(ksnpGenomes + str(i), 'w')) as outFile:
+                for file in splitKsnpList[i]:
+                    prefixKSNP = file.split(".")
+                    outFile.write(os.path.abspath(faPath + file) + "\t" + prefixKSNP[0] + "\n")
+        subprocess.Popen(["MakeFasta", ksnpGenomes, ksnpPath + "ForKchooser"], close_fds=True).communicate()[0]
+        subprocess.Popen(["Kchooser", ksnpPath + "ForKchooser"], close_fds=True).communicate()[0]
+        shutil.move("Kchooser.report", ksnpPath + "Kchooser.report")
+        with open(ksnpPath + "Kchooser.report", "r") as kOut:
+            content = kOut.readlines()
+            for line in content:
+                if re.match(r'The optimum value of K is (.*)\.', line):
+                    tempInt = re.findall(r'The optimum value of K is (.*)\.', line)
+                    ksnpInt = tempInt[0]
+                    for i in range(len(splitKsnpList)):
+                        if(i is 0):
+                            subprocess.Popen(["kSNP3 -in " + ksnpGenomes + str(i) + " -k " + str(ksnpInt) + " -outdir " + ksnpPath + "kSNP3_results -ML -CPU " + str(ksnpCpus)], shell=True, close_fds=True).communicate()[0]
+                        else:
+                            subprocess.Popen(["kSNP3 -in " + ksnpGenomes + str(i) + " -k " + str(ksnpInt) + " -outdir " + ksnpPath + "kSNP3_results -ML -CPU " + str(ksnpCpus) + " -SNPs_all " + ksnpPath + "kSNP3_results/SNPs_all"], shell=True, close_fds=True).communicate()[0]
+                    if(os.path.isfile("fasta_list")):
+                        shutil.move("fasta_list", ksnpPath + "fasta_list")
+                    else:
+                        print("Unable to find optimum value of K")
 
 
 #Creates concatenated FAA file, adding file names to start of appropriate lines
