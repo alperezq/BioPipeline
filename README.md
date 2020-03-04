@@ -114,9 +114,10 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Authors
 
-* **Alvaro L Perez-Quintero** - *Design and function* - [Research Gate Profile](https://www.researchgate.net/profile/Alvaro_L_Perez-Quintero)
+* **Alvaro L Perez-Quintero** - *Design and function* - Post-Doc Position, CSU Dept. of Bioagricultural Sciences and Pest Management
+    [Research Gate Profile](https://www.researchgate.net/profile/Alvaro_L_Perez-Quintero)
 
-* **Rex Steele**  - *Coding* - 
+* **Rex Steele**  - *Coding* - CSU CS Junior
 
 ## License
 
