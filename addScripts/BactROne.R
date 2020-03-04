@@ -1,15 +1,7 @@
 #!/usr/bin/env Rscript
-#R script for first section of CSU Bioinformatics Pipeline
-
 #Declaration of libraries
-library(ggplot2)
-library(pheatmap)
-library(ComplexHeatmap)
 library(reshape2)
-library(ape)
 library(stringr)
-library(plyr)
-library(dplyr)
 library(argparse)
 
 #Use of argparse to create parser to read in project path

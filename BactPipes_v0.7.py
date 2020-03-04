@@ -9,7 +9,6 @@ import argparse #Allows use of command line style argument call
 import subprocess #For execution of outside scripts
 import multiprocessing as mp #Run run multiple processes at once
 import pandas as pd
-import time
 
 #Prevents creation of .pyc files when running
 sys.dont_write_bytecode = True
@@ -18,7 +17,7 @@ sys.dont_write_bytecode = True
 parserPS = argparse.ArgumentParser()
 parserPS.add_argument("name", help="Name of project. Must be non-existant directory if running first half of pipeline. If just running the second half, must use project directory created by / in same format as Idun's Pipeline")
 parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
-parserPS.add_argument("-P","--pipeStart", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing")
+parserPS.add_argument("-B","--beginning", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing")
 parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated")
 args = parserPS.parse_args()
 
@@ -33,7 +32,7 @@ if __name__== '__main__':
     pipeScoary = False
     if args.scoary is not None:
         pipeScoary = True
-    if args.pipeStart is not None:
+    if args.beginning is not None:
         pipeStart = True
 
     #Processor variable, halves if greater than 10 per project guidelines by Alvaro
@@ -50,10 +49,10 @@ if __name__== '__main__':
 
     #Assignment of pipePath and FASTAlist, dependent on mode being run
     if pipeStart is True:
-        if args.pipeStart is None:
+        if args.beginning is None:
             print("Must provide a directory with FASTA files when running initial section of pipeline.\nExiting...")
             sys.exit()
-        pipePath, fastaPath = BS.pipeStart(args.name, args.pipeStart)
+        pipePath, fastaPath = BS.pipeStart(args.name, args.beginning)
     else:
         pipePath, FASTAlist = BS.pipeDetour(args.name)
 

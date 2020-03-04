@@ -1,6 +1,4 @@
 library(ape)
-library(pheatmap)
-library(stringr)
 library(dplyr)
 library(phangorn)
 library(argparse)

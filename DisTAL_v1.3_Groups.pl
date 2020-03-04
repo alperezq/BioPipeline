@@ -8,6 +8,8 @@ use List::Util qw( min max );
 use Algorithm::NeedlemanWunsch;
 use Bio::Perl;
 use POSIX qw(ceil);
+use POSIX qw(floor);
+use POSIX qw(round);
 
 ##################################################################
 # DisTAL							 #
@@ -95,7 +97,8 @@ if (defined $options{i}) {$indel = $options{i}} else {$indel = $indefault};
 if (defined $options{d}) {$dup = $options{d}} else {$dup = $dupdefault};
 if (defined $options{r}) {$ruse = $options{r}} else {$ruse = "T"};
 
-my $Outdir = "Outputs";
+my $Outdir = "Outputs"; #MODALPQ new change back
+#my $Outdir = "AlvaroDistalTest";
 my $Outname;
 if ( -d "$Outdir") {} else { system ("mkdir $Outdir")};
 if ($ARGV[1]) {$Outname = "$Outdir/$ARGV[1]"} else {$Outname = "$Outdir/Output"};
@@ -164,6 +167,8 @@ while ( my $line = <$Inital> ) {
 
 for ( my $i = 0 ; $i <= $#rIDs ; $i++ ) {
 my $id = "$rIDs[$i]";
+print "$id\n";
+if ($id ne ">X_campestris_vitiswoodrowii_LMG954|NZ_LOKG01000047.1 Xanthomonas campestris pv. vitiswoodrowii strain LMG954 contig_49, whole genome shotgun sequence_+_32277_34125_1.5") { #had to add this line because this partcular sequence was causing problems
 my $seq = $AA{$rIDs[$i]};
 
 my @position_array; #array that will store all the postitions where a string for a TAL repetition is found
@@ -187,7 +192,7 @@ foreach (@Ini_repeat) {
 
 	for ( my $i = 1 ; $i <= $#POS ; $i++ ) {
 		my $length = $POS[$i] - $POS[ $i - 1 ];
-		push @Repeat_len, $length;
+		if ($length > 0) {push @Repeat_len, $length;}
 		
 	}
   #find most common repetition length
@@ -257,14 +262,17 @@ foreach (@Ini_repeat) {
 				my $rep2 = substr ($seq, $POS[$#POS] + 13, ($common_len-11));
 				$last_repeat = join ("", $rep1, $rep2);
 							}
-		push @Repeat_array, $last_repeat;
+		my $Replen = length $last_repeat;#NU MOD ALPQ
+		if ($Replen >= 1) {push @Repeat_array, $last_repeat;} #NU MOD ALPQ
 
 ###ADD Cterminal
-
+	
+	if (length $seq > $POS[$#POS]+$common_len){ #NU MOD ALPQ
 	my $Cter = substr ($seq, $POS[$#POS]+$common_len);
-	print "$Cter\n";
-	push @Repeat_array, $Cter;
-
+	my $lenCter = length $Cter; #NU MOD ALPQ
+	if ($lenCter > 0) {print "$Cter\n";
+	push @Repeat_array, $Cter;}
+	}
 
 	#print repeats
 	if ( ($max_len == $common_len) and ($min_len > $common_len -2)) 
@@ -276,7 +284,7 @@ foreach (@Ini_repeat) {
 				}
 
 
-
+}#end of added ifto filter out vitiswoodrowii sequence MODALPQ
 }
 
 #Read additional Info file
@@ -369,7 +377,7 @@ my $maxlen = (sort { $a <=> $b } ($#Sa, $#Sb))[-1] + 1;
 #my $normscore = int((($maxlen - $score) / $maxlen) * 100 )+0.5); #mod
 my $normscore = (($maxlen - $score) / $maxlen) * 100 ; #mod
 #$normscore = sprintf("%.0f", $normscore);
-$normscore = ceil($normscore);
+$normscore = ceil($normscore); #mod from ceil
 print $OUT0 "$normscore "; 
 
 }

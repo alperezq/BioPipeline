@@ -1,10 +1,7 @@
-library(dplyr)
-library(ape)
+#!/usr/bin/env Rscript
+#Declaration of libraries
 library(reshape2)
-library(stringr)
-library(pheatmap)
-library(phangorn)
-library(dendextend)
+library(dplyr)
 library(argparse)
 
 #collects arguments

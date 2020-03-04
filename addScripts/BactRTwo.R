@@ -1,10 +1,5 @@
 #!/usr/bin/env Rscript
 #Declaration of libraries
-library(ggplot2)
-library(reshape2)
-library(ape)
-library(stringr)
-library(plyr)
 library(dplyr)
 library(argparse)
 
