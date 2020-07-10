@@ -15,10 +15,15 @@ sys.dont_write_bytecode = True
 
 #Parser from argparse for command line refinement
 parserPS = argparse.ArgumentParser()
-parserPS.add_argument("name", help="Name of project. Must be non-existant directory if running first half of pipeline. If just running the second half, must use project directory created by / in same format as Idun's Pipeline")
-parserPS.add_argument("processors", help="Number of processors to utilize for this job", type=int)
-parserPS.add_argument("-B","--beginning", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing")
-parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated")
+parserPS.add_argument("name", help="Name of project. Must be non-existant directory if running first half of pipeline. If just running the second half, must use project directory created by / in same format as Pipeline.")
+parserPS.add_argument("processors", help="Number of processors to utilize for this job.", type=int)
+parserPS.add_argument("-B","--beginning", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing.")
+parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated.")
+parserPS.add_argument("-p", action='store_false', help="Optional flag to skip Prokka. If running Orthofinder, Prokka files must be present.")
+parserPS.add_argument("-o", action='store_false', help="Optional flag to skip Orthofinder.")
+parserPS.add_argument("-r", action='store_false', help="Optional flag to skip RVDMIner. If running DisTAL, RVDMiner files must be present. ")
+parserPS.add_argument("-d", action='store_false', help="Optional flag to skip DisTAL.")
+parserPS.add_argument("-k", action='store_false', help="Optional flag to skip kSNP3.")
 args = parserPS.parse_args()
 
 def tandemRepeatFinder(tanFile):
@@ -85,19 +90,28 @@ if __name__== '__main__':
         BF.trfParse(TRFfiles, FASTAlist)
 
         #Establish first set of processes for the pipeline and pass their relevant parameters
-        prokkaProcess = mp.Process(target = BF.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs,))
-        RVDProcess = mp.Process(target = BF.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles,))
-        KSNP3Process = mp.Process(target = BF.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
+        if args.p or args.o:
+            prokkaProcess = mp.Process(target = BF.prokka, args =(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs, args.p, args.o,))
+        if args.r or args.d:
+            RVDProcess = mp.Process(target = BF.RVDminer, args = (FASTAlist, FASTAfiles, RVDfiles, DISTALfiles, args.r, args.d,))
+        if args.k:
+            KSNP3Process = mp.Process(target = BF.ksnpCall, args = (FASTAfiles, KSNP3files, FASTAlist, CPUs,))
 
         #Start processes
-        prokkaProcess.start()
-        RVDProcess.start()
-        KSNP3Process.start()
+        if args.p or args.o:
+            prokkaProcess.start()
+        if args.r or args.d:
+            RVDProcess.start()
+        if args.k:
+            KSNP3Process.start()
 
         #Rejoin processes with main thread, won't continue till each finishes
-        prokkaProcess.join()
-        RVDProcess.join()
-        KSNP3Process.join()
+        if args.p or args.o:
+            prokkaProcess.join()
+        if args.r or args.d:
+            RVDProcess.join()
+        if args.k:
+            KSNP3Process.join()
 
         #Creation of faaConcatenated and rvdNucs files for end Results
         BF.concatFaa(PROKKAfiles + "FAAs/", RESULTSfiles)
@@ -122,3 +136,4 @@ if __name__== '__main__':
 
             #Call BayesTraitsV3 on prior results of pipeline
             BF.bayesPool(pipePath)
+            BF.bayesParse(Rfiles, DISTALfiles, TRFfiles, ORTHOfiles, RESULTSfiles, LOGfiles)

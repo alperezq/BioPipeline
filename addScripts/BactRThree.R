@@ -3,6 +3,8 @@
 library(reshape2)
 library(dplyr)
 library(argparse)
+library(ape)
+library(stringr)
 
 #collects arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -40,41 +42,12 @@ rep_trf_file <- function()
           repTrfIds <- repeatWithTrf[repeatWithTrf$Name %in% ids,]
           if(nrow(repTrfIds) > 0)
           {
-            write.csv(repTrfIds, paste(resultDIR, "repTrfIds.csv", sep=""), row.names=TRUE)
-          }else{write("repTRFIds lacking data, unable to create file.", file = err, append = TRUE)}
-        }else{write("Lacking data in trf txt, unable to create repTRFIds.csv.", file = err, append = TRUE)}
-      }else{write("Missing trfParsed.txt, unable to create repTRFIds.csv.", file = err, append = TRUE)}
-    }else{write("Lacking data in repeat csv, unable to create repTRFIds.csv.", file = err, append = TRUE)}
-  }else{write("Missing RepeatNames.csv, unable to create repTRFIds.csv.", file = err, append = TRUE)}
-}
-
-rvd_ids_file <- function()
-{
-  if(file.exists(rvdFASTAFile))
-  {
-    rvdFASTA <- read.FASTA(rvdFASTAFile,type="AA")
-    if(object.size(rvdFASTA) > 0)
-    {
-      rvdFASTA <- rvdFASTA[names(rvdFASTA) %in% talIDS]
-      if(object.size(rvdFASTA) > 0)
-      {
-        write.FASTA(rvdFASTA,paste(resultDIR, "rvdIds.FASTA", sep=""))
-      }else{write("rvdFASTA in rvd_ids_file function lacking data, unable to create file", file = err, append = TRUE)}
-    }else{write("rvdFASTA lacking data, unable to create file", file = err, append = TRUE)}
-  }else{write("rvdFASTA was not generated, unable to modify file", file = err, append = TRUE)}
-}
-
-rvd_nucs_file <- function()
-{
-  if(file.exists(rvdNucsFile))
-  {
-    rvdNuc <- read.csv(rvdNucsFile)
-    if(object.size(rvdNucs) > 0)
-    {
-      newRvd <- rvdNucs[rvdNucs$ID %in% talIDS,]
-      write.csv(newRvd,paste(resultDIR, "rvdIDs.csv"))
-    }else{write("rvdNucs lacking data, unable to modify file", file = err, append = TRUE)}
-  }else{write("rvdNucs.csv was not generated, unable to modify file", file = err, append = TRUE)}
+            write.csv(repTrfIds, paste(resultDIR, "sc_repTrfIds.csv", sep=""), row.names=TRUE)
+          }else{write("BactRThree: repTRFIds lacking data, unable to create file.", file = err, append = TRUE)}
+        }else{write("BactRThree: Lacking data in trf txt, unable to create repTRFIds.csv.", file = err, append = TRUE)}
+      }else{write("BactRThree: Missing trfParsed.txt, unable to create repTRFIds.csv.", file = err, append = TRUE)}
+    }else{write("BactRThree: Lacking data in repeat csv, unable to create repTRFIds.csv.", file = err, append = TRUE)}
+  }else{write("BactRThree: Missing RepeatNames.csv, unable to create repTRFIds.csv.", file = err, append = TRUE)}
 }
 
 ortho_melt <- function()
@@ -104,37 +77,73 @@ ortho_melt <- function()
 
           if(object.size(faaOrthoOrder) > 0)
           {
-            write.FASTA(faaOrthoOrder,paste(resultDIR, "faaIds.FASTA", sep=""))
-          }else{write("faaOrthoOrder in ortho_melt function lacking data, unable to create file", file = err, append = TRUE)}
-        }else{write("faaFASTA file lacking data, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
-      }else{write("Missing faaFASTA, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
-    }else{write("Orthogroups txt lacking data, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
-  }else{write("Missing Orthogroups.txt, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
+            write.FASTA(faaOrthoOrder,paste(resultDIR, "sc_faaIds.FASTA", sep=""))
+          }else{write("BactRThree: faaOrthoOrder in ortho_melt function lacking data, unable to create file", file = err, append = TRUE)}
+        }else{write("BactRThree: faaFASTA file lacking data, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
+      }else{write("BactRThree: Missing faaFASTA, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
+    }else{write("BactRThree: Orthogroups txt lacking data, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
+  }else{write("BactRThree: Missing Orthogroups.txt, unable to continue with faaIds.FASTA", file = err, append = TRUE)}
+}
+
+rvd_ids_file <- function()
+{
+  if(file.exists(rvdFASTAFile))
+  {
+    rvdFASTA <- read.FASTA(rvdFASTAFile,type="AA")
+    if(object.size(rvdFASTA) > 0)
+    {
+      rvdFASTA <- rvdFASTA[names(rvdFASTA) %in% talIDS]
+      if(object.size(rvdFASTA) > 0)
+      {
+        write.FASTA(rvdFASTA,paste(resultDIR, "sc_rvdIDs.FASTA", sep=""))
+      }else{write("BactRThree: rvdFASTA in rvd_ids_file function lacking data, unable to create file", file = err, append = TRUE)}
+    }else{write("BactRThree: rvdFASTA lacking data, unable to create file", file = err, append = TRUE)}
+  }else{write("BactRThree: rvdFASTA was not generated, unable to modify file", file = err, append = TRUE)}
+}
+
+rvd_nucs_file <- function()
+{
+  if(file.exists(rvdNucsFile))
+  {
+    rvdNucs <- read.csv(rvdNucsFile)
+    if(object.size(rvdNucs) > 0)
+    {
+      newRvd <- rvdNucs[rvdNucs$ID %in% talIDS,]
+      write.csv(newRvd,paste(resultDIR, "sc_rvdIDs.csv", sep=""))
+    }else{write("BactRThree: rvdNucs lacking data, unable to modify file", file = err, append = TRUE)}
+  }else{write("BactRThree: rvdNucs.csv was not generated, unable to modify file", file = err, append = TRUE)}
 }
 
 #Open error file for writing
-errFile <- paste(Logging, "RErrors.txt", sep = "")
+errFile <- paste(Logging, "RErrorsBact3.txt", sep = "")
 err <- file(errFile)
 
-#Creating ideas
+#Creating ids
 if(file.exists(scoaryCSVFile))
 {
+	#Change to read delim for bayes results
   scoaryCSV <- read.csv(scoaryCSVFile)
   if(nrow(scoaryCSV) > 0)
   {
-    ids <- scoaryCSV[scoaryCSV$Bonferroni_p<0.05,1]
-    rep_trf_file()
-    ortho_melt()
-    if(file.exists(talGroupsCSVFile))
+	   #Filter out values based on Bonferroni_p
+    ids <- as.vector(scoaryCSV[scoaryCSV$Bonferroni_p<0.05,1])
+    if(length(ids) > 0)
     {
-      talGroupsCSV <- read.csv(talGroupsCSVFile, stringsAsFactors = FALSE)
-      if(nrow(talGroupsCSV) > 0)
+      rep_trf_file()
+      ortho_melt()
+      if(file.exists(talGroupsCSVFile))
       {
-        talIDS <- talGroupsCSV$TAL[paste("TALGroup_",talGroupsCSV$Group,sep="") %in% ids]
-        rvd_ids_file()
-        rvd_nucs_file()
-      }else{write("talGroups csv lacking data, unable to create talIDS", file = err, append = TRUE)}
-    }else{write("Missing talgroups csv, unable to create talIDS", file = err, append = TRUE)}
-  }else{write("Scoary csv lacking data, unable to create ids", file = err, append = TRUE)}
-}else{write("Missing scoary csv, unable to create ids", file = err, append = TRUE)}
+        talGroupsCSV <- read.csv(talGroupsCSVFile, stringsAsFactors = FALSE)
+        if(nrow(talGroupsCSV) > 0)
+        {
+          talIDS <- as.vector(talGroupsCSV$TAL[paste("TALGroup_",talGroupsCSV$Group,sep="") %in% ids])
+          if(length(talIDS) > 0){
+            rvd_ids_file()
+            rvd_nucs_file()
+          }else{write("BactRThree: talIDS has no data, unable to create talIDS", file = err, append = TRUE)}
+        }else{write("BactRThree: talGroups csv lacking data, unable to create talIDS", file = err, append = TRUE)}
+      }else{write("BactRThree: Missing talgroups csv, unable to create talIDS", file = err, append = TRUE)}
+    }else{write("BactRThree: ids has no data, unable to continue processing heres", file = err, append = TRUE)}
+  }else{write("BactRThree: Scoary csv lacking data, unable to create ids", file = err, append = TRUE)}
+}else{write("BactRThree: Missing scoary csv, unable to create ids", file = err, append = TRUE)}
 close(err)

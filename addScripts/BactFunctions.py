@@ -29,41 +29,55 @@ def trfParse(trfSrc, fileList):
 
 
 #Run FASTA files through prokka, parse FAA'srun results through Ortho, move results as needed (Needs citation)
-def prokka(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs):
-    for file in FASTAlist:
-        ProkkaPrefix = file.split(".")
-        subprocess.Popen(["prokka", "--outdir", PROKKAfiles + file, "--compliant", "--prefix", ProkkaPrefix[0], "--force", "--genus", "Xanthomonus", "--species", "Oryzae", "--strain", ProkkaPrefix[0], "--cpus", CPUs, "--rfam", FASTAfiles + file], close_fds=True).communicate()[0]
-        for item in os.listdir(PROKKAfiles + file + "/"):
-            if item.endswith(".faa"):
-                shutil.copyfile(PROKKAfiles + file + "/" + item, PROKKAfiles + "FAAs/" + item)
-    os.system("grep '>' " + PROKKAfiles + "FAAs/*.faa | cut -d ' ' -f2- | sort | uniq -c > " + PROKKAfiles + "parsedProkka.txt")
-    subprocess.Popen(["orthofinder", "-f", PROKKAfiles + "FAAs/", "-t", CPUs], close_fds=True).communicate()[0]
-    for dir in os.listdir(PROKKAfiles + "FAAs/"):
-        if "Results" in dir:
-            for item in os.listdir(PROKKAfiles + "FAAs/" + dir):
-                shutil.move(PROKKAfiles + "FAAs/" + dir + "/" + item, ORTHOfiles + item)
+def prokka(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs, boolProkka, boolOrtho):
+    if boolProkka:
+        for file in FASTAlist:
+            ProkkaPrefix = file.split(".")
+            subprocess.Popen(["prokka", "--outdir", PROKKAfiles + file, "--compliant", "--prefix", ProkkaPrefix[0], "--force", "--genus", "Xanthomonus", "--species", "Oryzae", "--strain", ProkkaPrefix[0], "--cpus", CPUs, "--rfam", FASTAfiles + file], close_fds=True).communicate()[0]
+            for item in os.listdir(PROKKAfiles + file + "/"):
+                if item.endswith(".faa"):
+                    shutil.copyfile(PROKKAfiles + file + "/" + item, PROKKAfiles + "FAAs/" + item)
+        os.system("grep '>' " + PROKKAfiles + "FAAs/*.faa | cut -d ' ' -f2- | sort | uniq -c > " + PROKKAfiles + "parsedProkka.txt")
+    if boolOrtho:
+        if os.path.exists(PROKKAfiles + "FAAs/")
+            subprocess.Popen(["orthofinder", "-f", PROKKAfiles + "FAAs/", "-t", CPUs], close_fds=True).communicate()[0]
+            for dir in os.listdir(PROKKAfiles + "FAAs/"):
+                if "Results" in dir:
+                    for item in os.listdir(PROKKAfiles + "FAAs/" + dir):
+                        shutil.move(PROKKAfiles + "FAAs/" + dir + "/" + item, ORTHOfiles + item)
+        else:
+            print(f"{Prokkafiles}/FAAs/ was not found as expected. Unable to run Orthofinder.")
+            return -1
 
 
 #Function for use of RVDminer, then passing of results to DisTAL
-def RVDminer(RVDFiles, RVDsrc, RVDdst, DISdst):
-    for file in RVDFiles:
-        prefixRVD = file.split(".")
-        subprocess.Popen(["perl", "RVDminer.pl", RVDsrc + file, prefixRVD[0]], close_fds=True).communicate()[0]
-        for item in os.listdir(os.getcwd()):
-            if prefixRVD[0] in item:
-                shutil.move(os.getcwd() + "/" + item, RVDdst + item)
-        os.system("cat " + RVDdst + "*TALS_aa.FASTA | sed 's/ Repeats//g' > " + DISdst + "rvdCombo.FASTA")
-    shutil.move("./_Inline", RVDdst + "_Inline")
-    comboFile = DISdst + "rvdCombo.FASTA"
-    subprocess.Popen(["perl", "DisTAL_v1.3_Groups.pl", "-m", "T", comboFile, "disTALOut", "4.5"], close_fds=True).communicate()[0]
-    shutil.move(os.getcwd() + "/" + "Outputs", DISdst + "Outputs")
+def RVDminer(RVDFiles, RVDsrc, RVDdst, DISdst, boolRVD, boolDIS):
+    #RVDMiner
+    if boolRVD:
+        for file in RVDFiles:
+            prefixRVD = file.split(".")
+            subprocess.Popen(["perl", "RVDminer.pl", RVDsrc + file, prefixRVD[0]], close_fds=True).communicate()[0]
+            for item in os.listdir(os.getcwd()):
+                if prefixRVD[0] in item:
+                    shutil.move(os.getcwd() + "/" + item, RVDdst + item)
+            os.system("cat " + RVDdst + "*TALS_aa.FASTA | sed 's/ Repeats//g' > " + DISdst + "rvdCombo.FASTA")
+        shutil.move("./_Inline", RVDdst + "_Inline")
+    #DisTAL
+    if boolDIS:
+        comboFile = DISdst + "rvdCombo.FASTA"
+        if path.exists(comboFile):
+            subprocess.Popen(["perl", "DisTAL_v1.3_Groups.pl", "-m", "T", comboFile, "disTALOut", "4.5"], close_fds=True).communicate()[0]
+            shutil.move(os.getcwd() + "/" + "Outputs", DISdst + "Outputs")
+        else:
+            print(f"{comboFile} was not found as expected. Unable to run DisTAL.")
+            return -1
 
 
 #Function for use of KSNP3, appropriate parsing, and movement of files
 def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
         ksnpGenomes = ksnpPath + "ksnpGenomes"
         #Size of sets to split the ksnpList in to for easier processing by kSNP3 (avoids seg faults!!!)
-        basis = 75
+        basis = 50
         splitKsnpList = [ksnpList[i * basis:(i+1)*basis] for i in range((len(ksnpList) + basis - 1) // basis)]
         with(open(ksnpGenomes, 'w')) as outFile:
             for file in ksnpList:
@@ -86,8 +100,10 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
                     for i in range(len(splitKsnpList)):
                         if(i is 0):
                             subprocess.Popen(["kSNP3 -in " + ksnpGenomes + str(i) + " -k " + str(ksnpInt) + " -outdir " + ksnpPath + "kSNP3_results -ML -CPU " + str(ksnpCpus)], shell=True, close_fds=True).communicate()[0]
+                            print("Finished run of set: " + str(i))
                         else:
                             subprocess.Popen(["kSNP3 -in " + ksnpGenomes + str(i) + " -k " + str(ksnpInt) + " -outdir " + ksnpPath + "kSNP3_results -ML -CPU " + str(ksnpCpus) + " -SNPs_all " + ksnpPath + "kSNP3_results/SNPs_all"], shell=True, close_fds=True).communicate()[0]
+                            print("Finished run of set: " + str(i))
                     if(os.path.isfile("fasta_list")):
                         shutil.move("fasta_list", ksnpPath + "fasta_list")
                     else:
@@ -188,7 +204,7 @@ def scoary(pipePath, providedCSV):
         return None
 
 
-#Function for routing needed data to R for parsing of various data sets
+#Function for routing needed data to R for parsing of various data sets, basedo on scoary Results
 def scoaryParse(SCOARYfiles, Rfiles, DISTALfiles, TRFfiles, ORTHOfiles, RESULTSfiles, Logging):
     for file in os.listdir(SCOARYfiles):
         if file.endswith("results.csv"):
@@ -216,7 +232,7 @@ def bayesPool(pipePath):
         if(os.path.exists(pipePath + "BAYESfiles/Ktree.nexus")):
             bayesData = pd.read_csv(bayesGen, index_col=0)
             with open(pipePath + "Results/bayesResults.txt", 'w') as bayesOut:
-                bayesOut.writelines("Gene\tDependent\tIndependent\t2*(dep-ind)\n")
+                bayesOut.writelines("Gene\tDependent\tIndependent\tCalculation\n")
             bayesList = (bayesData.columns)
             pool = mp.Pool(processes=10,)
             pool.starmap(bayesCall, zip(bayesList, repeat(pipePath)))
@@ -301,3 +317,23 @@ def bayesCall(iterableColumns, path):
     for item in os.listdir(path + "BAYESfiles/"):
         if iterableColumns in item:
             os.remove(path + "BAYESfiles/" + item)
+
+#Function for routing needed data to R for parsing of various data sets, using bayesResults.txt
+def bayesParse(Rfiles, DISTALfiles, TRFfiles, ORTHOfiles, RESULTSfiles, Logging):
+    for file in os.listdir(RESULTSfiles):
+        if file == "bayesResults.txt":
+            bayesTXTFile = (RESULTSfiles + file)
+    try:
+        bayesTXTFile
+    except:
+        print("bayesResults.txt doesn't exist, unable to continue process")
+        sys.exit()
+    else:
+        repeatsCSV = Rfiles + "RepeatNames.csv"
+        distalGroups = DISTALfiles + "Outputs/disTALOut.TALgroups.csv"
+        parsedTRF = TRFfiles + "trfParsed.txt"
+        orthogroupsTXT = ORTHOfiles + "Orthogroups.txt"
+        comboFile = DISTALfiles + "rvdCombo.FASTA"
+        faaFile = (RESULTSfiles + "faaConcatenated.faa")
+        rvdNucs = (RESULTSfiles + "rvdNucs.csv")
+        subprocess.Popen(["Rscript", "addScripts/BactRFive.R", bayesTXTFile, repeatsCSV, distalGroups, parsedTRF, orthogroupsTXT, comboFile, RESULTSfiles, faaFile, rvdNucs, Logging], close_fds=True).communicate()[0]
