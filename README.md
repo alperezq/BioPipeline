@@ -6,34 +6,13 @@ One Paragraph of project description goes here
 
 1. Download this repository
 2. Ensure the requirements for the pipeline code itself(listed further down) are installed
-2. Download the and install the following requisite programs. Currently we do not have an installer for packages, so you must do so manually. We hope to change this soon.
+2. Download the and install the following requisite programs. Currently we do not have an installer for packages, so you must do so manually.
     - prokka
     - orthofinder
     - TandemRepeatsFinder
     - kSNP3
     - scoary
     - BayesTraitsV3
-
-### Prerequisites
-
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
 
 Following are the current list of requirements for the pipeline. Currently you must install these yourself, we do hope to change this in the near future.
    #### Pipeline code requirements
@@ -88,21 +67,6 @@ To call the pipeline please be inside of the overarching directory, currently na
                             X_arboricola_corylina_CFBP1159,0
                             X_arboricola_corylina_CFBP2565,1
 
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
 
 ## Deployment
 
@@ -122,9 +86,3 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
