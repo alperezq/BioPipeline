@@ -68,6 +68,7 @@ ortho_melt <- function()
         if(object.size(faaFASTA) > 0)
         {
           fastaIds <-data.frame("Short_ID"=str_split_fixed(names(faaFASTA)," ",3)[,2],"fastaID"=names(faaFASTA))
+          orthoMelt <- orthoMelt[orthoMelt$value %in% fastaIds$Short_ID,] #new line added to resolve issue with mismatched values for IDs
           orthoFastaIds <- left_join(fastaIds,orthoMelt,by=c("Short_ID"="value"))
           orthoFastaIds$New_ID <- paste(orthoFastaIds$V1,orthoFastaIds$fastaID,sep=":")
           names(faaFASTA) <- orthoFastaIds$New_ID

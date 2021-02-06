@@ -10,7 +10,7 @@ import subprocess #For execution of outside scripts
 import multiprocessing as mp #Run run multiple processes at once
 import pandas as pd
 
-#Prevents creation of .pyc files when running
+#Prevents writing of .pyc files when running
 sys.dont_write_bytecode = True
 
 #Parser from argparse for command line refinement
@@ -19,18 +19,20 @@ parserPS.add_argument("name", help="Name of project. Must be non-existant direct
 parserPS.add_argument("processors", help="Number of processors to utilize for this job.", type=int)
 parserPS.add_argument("-B","--beginning", nargs="?", help="Optional argument to run first half of pipeline. Must provide directory with FASTA files for processing.")
 parserPS.add_argument("-S","--scoary", nargs='?', help="Optional argument to add a CSV for Scoary processing. Scoary, and second portion of pipeline, will not run without this, and columns must match boundmatrix.csv that is generated.")
-parserPS.add_argument("-p", action='store_false', help="Optional flag to skip Prokka. If running Orthofinder, Prokka files must be present.")
-parserPS.add_argument("-o", action='store_false', help="Optional flag to skip Orthofinder.")
-parserPS.add_argument("-r", action='store_false', help="Optional flag to skip RVDMIner. If running DisTAL, RVDMiner files must be present. ")
-parserPS.add_argument("-d", action='store_false', help="Optional flag to skip DisTAL.")
-parserPS.add_argument("-k", action='store_false', help="Optional flag to skip kSNP3.")
+parserPS.add_argument("-p", action='store_false', help="Optional flag to skip Prokka. If running Orthofinder, Prokka files must be present. Only applies to first half of pipeline.")
+parserPS.add_argument("-o", action='store_false', help="Optional flag to skip Orthofinder. Only applies to first half of pipeline.")
+parserPS.add_argument("-r", action='store_false', help="Optional flag to skip RVDMIner. If running DisTAL, RVDMiner files must be present. Only applies to first half of pipeline.")
+parserPS.add_argument("-d", action='store_false', help="Optional flag to skip DisTAL. Only applies to first half of pipeline.")
+parserPS.add_argument("-k", action='store_false', help="Optional flag to skip kSNP3. Only applies to first half of pipeline.")
+parserPS.add_argument("-t", action='store_false', help="Optional flag to skip TandemRepeatsFinder. Only applies to first half of pipeline.")
+parserPS.add_argument("-c", action='store_false', help="Skip creation of project directory, select if you are running select portions of the first half. Only applies to first half of pipeline.")
 args = parserPS.parse_args()
-
-def tandemRepeatFinder(tanFile):
-    subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
 
 #Main section / execution of code
 if __name__== '__main__':
+
+    # Get path to folder with Biopipeline
+    truePath = '/'.join(os.path.abspath(__file__).split('/')[0:-1]) + '/'
 
     #Assignment of pipe scope variables
     pipeStart = False
@@ -53,7 +55,7 @@ if __name__== '__main__':
         sys.exit()
 
     #Assignment of pipePath and FASTAlist, dependent on mode being run
-    if pipeStart is True:
+    if pipeStart is True and args.c:
         if args.beginning is None:
             print("Must provide a directory with FASTA files when running initial section of pipeline.\nExiting...")
             sys.exit()
@@ -76,18 +78,24 @@ if __name__== '__main__':
     LOGfiles = pipePath + "Logging/"
     providedCSV = args.scoary
 
+    def tandemRepeatFinder(tanFile):
+        subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
+
     #Gather FASTA files, copy to project folder for further use
     if pipeStart is True:
-        FASTAlist = BS.collectFasta(fastaPath, FASTAfiles)
+        if args.c:
+            FASTAlist = BS.collectFasta(fastaPath, FASTAfiles)
 
-        #Call to TandemRepeatsFinder, done individually to allow processing of large batches of Files
-        workerPool = mp.Pool(processes=int(CPUs),)
-        workerPool.map(tandemRepeatFinder, FASTAlist)
-        workerPool.close()
-        workerPool.join()
 
-        #Parsing of TRF files
-        BF.trfParse(TRFfiles, FASTAlist)
+        if args.t:
+            #Call to TandemRepeatsFinder, done individually to allow processing of large batches of Files
+            workerPool = mp.Pool(processes=int(CPUs),)
+            workerPool.map(tandemRepeatFinder, FASTAlist)
+            workerPool.close()
+            workerPool.join()
+
+            #Parsing of TRF files
+            BF.trfParse(TRFfiles, FASTAlist)
 
         #Establish first set of processes for the pipeline and pass their relevant parameters
         if args.p or args.o:
@@ -121,9 +129,9 @@ if __name__== '__main__':
     if pipeScoary is True:
 
         #Call R script for further parsing of data
-        subprocess.Popen(["Rscript", "addScripts/BactROne.R", pipePath], close_fds=True).communicate()[0]
+        subprocess.Popen(["Rscript", truePath + "addScripts/BactROne.R", pipePath], close_fds=True).communicate()[0]
         BF.csvFix(Rfiles, FASTAlist)
-        subprocess.Popen(["Rscript", "addScripts/BactRTwo.R", pipePath], close_fds=True).communicate()[0]
+        subprocess.Popen(["Rscript", truePath + "addScripts/BactRTwo.R", pipePath], close_fds=True).communicate()[0]
 
         #Call Scoary if it is supplied the necessary CSV, compares rows of CSV with colums of boundMatrix.csv first
         if providedCSV is not None:
@@ -132,7 +140,7 @@ if __name__== '__main__':
             if scorFile is not None and os.path.exists(boundFile):
                subprocess.Popen(["scoary", "-t", scorFile, "-g", boundFile, "-s", "2", "-o", pipePath + "SCOARYfiles/"], close_fds=True).communicate()[0]
                BF.scoaryParse(SCOARYfiles, Rfiles, DISTALfiles, TRFfiles, ORTHOfiles, RESULTSfiles, LOGfiles)
-               subprocess.Popen(["Rscript", "addScripts/BactRFour.R", pipePath], close_fds=True).communicate()[0]
+               subprocess.Popen(["Rscript", truePath + "addScripts/BactRFour.R", pipePath], close_fds=True).communicate()[0]
 
             #Call BayesTraitsV3 on prior results of pipeline
             BF.bayesPool(pipePath)

@@ -4,11 +4,16 @@ import sys
 import shutil
 import os
 import re
+import random
 import pandas as pd
 import multiprocessing as mp
 from itertools import repeat
 
 sys.dont_write_bytecode = True
+
+# # TandemRepeatsFinder function call
+# def tandemRepeatFinder(tanFile):
+#     subprocess.Popen(["TandemRepeatsFinder", FASTAfiles + tanFile, "2", "7", "7", "80", "10", "50", "500", "-f", "-h"], close_fds=True).communicate()[0]
 
 #Parsing of TRF files to single text file
 def trfParse(trfSrc, fileList):
@@ -39,7 +44,7 @@ def prokka(FASTAlist, FASTAfiles, PROKKAfiles, ORTHOfiles, CPUs, boolProkka, boo
                     shutil.copyfile(PROKKAfiles + file + "/" + item, PROKKAfiles + "FAAs/" + item)
         os.system("grep '>' " + PROKKAfiles + "FAAs/*.faa | cut -d ' ' -f2- | sort | uniq -c > " + PROKKAfiles + "parsedProkka.txt")
     if boolOrtho:
-        if os.path.exists(PROKKAfiles + "FAAs/")
+        if os.path.exists(PROKKAfiles + "FAAs/"):
             subprocess.Popen(["orthofinder", "-f", PROKKAfiles + "FAAs/", "-t", CPUs], close_fds=True).communicate()[0]
             for dir in os.listdir(PROKKAfiles + "FAAs/"):
                 if "Results" in dir:
@@ -65,7 +70,7 @@ def RVDminer(RVDFiles, RVDsrc, RVDdst, DISdst, boolRVD, boolDIS):
     #DisTAL
     if boolDIS:
         comboFile = DISdst + "rvdCombo.FASTA"
-        if path.exists(comboFile):
+        if os.path.exists(comboFile):
             subprocess.Popen(["perl", "DisTAL_v1.3_Groups.pl", "-m", "T", comboFile, "disTALOut", "4.5"], close_fds=True).communicate()[0]
             shutil.move(os.getcwd() + "/" + "Outputs", DISdst + "Outputs")
         else:
@@ -77,7 +82,8 @@ def RVDminer(RVDFiles, RVDsrc, RVDdst, DISdst, boolRVD, boolDIS):
 def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
         ksnpGenomes = ksnpPath + "ksnpGenomes"
         #Size of sets to split the ksnpList in to for easier processing by kSNP3 (avoids seg faults!!!)
-        basis = 50
+        basis = 40
+        random.shuffle(ksnpList)
         splitKsnpList = [ksnpList[i * basis:(i+1)*basis] for i in range((len(ksnpList) + basis - 1) // basis)]
         with(open(ksnpGenomes, 'w')) as outFile:
             for file in ksnpList:
@@ -112,6 +118,8 @@ def ksnpCall(faPath, ksnpPath, ksnpList, ksnpCpus):
 
 #Creates concatenated FAA file, adding file names to start of appropriate lines
 def concatFaa(faaDir, RESULTSfiles):
+    if os.path.exists(RESULTSfiles + "faaConcatenated.faa"):
+        return(RESULTSfiles + "faaConcatenated.faa")
     faaList = [file for file in os.listdir(faaDir) if file.lower().endswith(".faa")]
     faaList.sort()
     for file in faaList:
