@@ -1,4 +1,4 @@
-# BactPipes: Bioinformatics Pipeline
+# Bact2Bact: Bioinformatics Pipeline
 
 One Paragraph of project description goes here
 
